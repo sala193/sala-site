@@ -1,8 +1,10 @@
 ---
 // 單案銷售頁：salahome.tw/p/<官網id>
-// 手機優先、無廣告、底部固定「加 LINE／撥電話」。資料來自永慶官網公開頁（listings.json），照片優先用圖庫。
-import '../../styles/global.css';
-import { AGENT, allCases, photosOf, priceText, districtOf, roadOf, titleOf } from '../../lib/store';
+// 版型＝「蔡莎拉專屬物件頁（喵爸風格範例）」：手機優先、無廣告、底部固定「撥電話／加 LINE／預約帶看」。
+// 資料來自永慶官網公開頁（listings.json），照片優先用我們的圖庫；官網沒寫的欄位就不顯示，不猜。
+import StoreLayout from '../../layouts/StoreLayout.astro';
+import Icon from '../../components/store/Icon.astro';
+import { AGENT, allCases, photosOf, priceParts, districtOf, titleOf, cleanFeature, caseNoShort } from '../../lib/store';
 
 export function getStaticPaths() {
   return allCases().map((item) => ({ params: { id: item.id }, props: { item } }));
@@ -12,205 +14,426 @@ const { item } = Astro.props as { item: ReturnType<typeof allCases>[number] };
 const d = (item as any).detail || {};
 const photos = photosOf(item);
 const title = titleOf(item);
-const road = item.address || '';
+const address = item.address || '';
+const [priceNum, priceUnit] = priceParts(item.price);
 const unitPrice = d.unitPrice && /\d/.test(d.unitPrice) ? d.unitPrice : null; // 官網寫「請洽業務」就不顯示，不自己算
-const district = districtOf(item);
+const caseNo = caseNoShort(item.caseNo || d.caseNo);
+const features: string[] = (d.features || []).map(cleanFeature).filter(Boolean);
+const vrUrl: string | null = d.vrUrl || null;
 const pageTitle = `${title}｜${AGENT.brand} 心選好宅`;
-const desc = `${item.type || ''} ${road} ${item.rooms || ''} ${item.price ? item.price + '萬' : ''}｜${AGENT.brand}為您服務`.replace(/\s+/g, ' ').trim();
-const shareImage = photos[0];
+const desc = `${address} ${item.type || ''} ${item.rooms || ''} 總價 ${priceNum}${priceUnit}｜${AGENT.brand}為您服務`.replace(/\s+/g, ' ').trim();
 
-const facts = [
-  item.type,
-  item.rooms,
-  item.buildingPing ? `建坪 ${item.buildingPing}` : null,
-  d.floorText,
-  item.age != null ? `屋齡 ${item.age} 年` : null,
-].filter(Boolean) as string[];
+// 左上角標籤：只放有根據的（降價、新上架、類型）
+const tags: { text: string; cls: string }[] = [];
+if (item.originalPrice && item.price && item.originalPrice > item.price) {
+  tags.push({ text: `🔥 降價 ${(item.originalPrice - item.price).toLocaleString('en-US')} 萬`, cls: 'bg-rose-600/95 text-white' });
+}
+if (item.isNew) tags.push({ text: '✨ 新上架', cls: 'bg-rose-600/95 text-white' });
+if (item.type) tags.push({ text: `⚡ ${item.type}`, cls: 'bg-slate-900/80 text-amber-300' });
+
+// 四格核心卡：從有資料的欄位裡依序挑 4 個
+const [roomsMain, roomsSub] = (() => {
+  const m = (d.layout || '').match(/(\d+)房.*?(\d+)廳(\d+)衛/);
+  return m ? [`${m[1]}房`, `${m[2]}廳 ${m[3]}衛`] : [d.layout || item.rooms || '', ''];
+})();
+const floor = (d.floorText || '').match(/^(.+)／(\d+)樓$/);
+const specCards = [
+  item.buildingPing ? { label: '建物總坪', value: String(item.buildingPing), sub: '坪' }
+    : item.landPing ? { label: '土地坪數', value: String(item.landPing), sub: '坪' } : null,
+  roomsMain ? { label: '格局規格', value: roomsMain, sub: roomsSub } : null,
+  item.age != null ? { label: '建物屋齡', value: String(item.age), sub: '年' } : null,
+  floor ? { label: '樓層', value: `${floor[1]}F`, sub: `共 ${floor[2]} 層` } : null,
+].filter(Boolean).slice(0, 4) as { label: string; value: string; sub: string }[];
 
 const rows: [string, string][] = [
-  ['類型', item.type || ''],
-  ['地址', road],
+  ['建物型態', [item.type, d.usage].filter(Boolean).join('｜')],
   ['社區', d.community || ''],
   ['格局', d.layout || item.rooms || ''],
   ['樓層', d.floorText || ''],
   ['建物坪數', d.buildingPing || (item.buildingPing ? `${item.buildingPing}坪` : '')],
-  ['　主建物', d.mainPing || ''],
-  ['　附屬建物', d.annexPing ? `${d.annexPing}${d.annexNote ? ' ' + d.annexNote : ''}` : ''],
-  ['　共同使用', d.sharedPing || ''],
+  ['主建物', d.mainPing || ''],
+  ['附屬建物', d.annexPing ? `${d.annexPing}${d.annexNote ? ' ' + d.annexNote : ''}` : ''],
+  ['共同使用', d.sharedPing || ''],
   ['土地坪數', d.landPing || (item.landPing ? `${item.landPing}坪` : '')],
   ['登記用途', d.usage || ''],
-  ['車位', d.parking || ''],
-  ['屋齡', item.age != null ? `${item.age} 年` : ''],
+  ['車位資訊', d.parking || ''],
   ['學區', d.school || ''],
-  ['案件編號', item.caseNo || ''],
 ].filter(([, v]) => v) as [string, string][];
----
-<!doctype html>
-<html lang="zh-Hant">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{pageTitle}</title>
-    <meta name="description" content={desc} />
-    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
-    <link rel="icon" href="/images/brand/favicon.png" />
-    <meta property="og:title" content={pageTitle} />
-    <meta property="og:description" content={desc} />
-    <meta property="og:type" content="website" />
-    <meta property="og:locale" content="zh_TW" />
-    <meta property="og:url" content={new URL(Astro.url.pathname, Astro.site)} />
-    {shareImage && <meta property="og:image" content={shareImage} />}
-    {shareImage && <meta name="twitter:card" content="summary_large_image" />}
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
-  </head>
-  <body class="pp">
-    <header class="pp-top">
-      <a class="pp-brand" href="/cases">
-        <img src="/images/brand/sala-logo-horizontal.png" alt={`${AGENT.brand}｜鶯歌．鳳鳴不動產`} />
-      </a>
-      <a class="pp-tel" href={`tel:${AGENT.tel}`}>📞 {AGENT.phone}</a>
-    </header>
 
-    <main class="pp-main">
-      {photos.length ? (
-        <section class="pp-gallery" aria-label="物件照片">
-          <div class="pp-track" id="track">
-            {photos.map((src, i) => (
-              <img src={src} alt={`${title} 第 ${i + 1} 張`} loading={i < 2 ? 'eager' : 'lazy'} decoding="async" />
+const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit' }).replace(/\D+/g, '/').replace(/\/$/, '');
+---
+<StoreLayout title={pageTitle} description={desc} image={photos[0]} path={`/p/${item.id}`}>
+  <div id="pp" data-title={title} data-caseno={caseNo} data-line-id={AGENT.lineId} class="hidden"></div>
+
+  <!-- 頂部欄 -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80">
+    <div class="max-w-md mx-auto px-4 h-14 flex items-center justify-between">
+      <a href="/cases" class="flex items-center space-x-2">
+        <img src={AGENT.headshot} alt={AGENT.name} class="w-8 h-8 rounded-full object-cover object-top shadow-sm" />
+        <div>
+          <div class="text-sm font-bold text-slate-900 leading-tight">房仲莎拉・{AGENT.name}</div>
+          <div class="text-[11px] text-slate-500 leading-tight">{AGENT.store}</div>
+        </div>
+      </a>
+      <div class="flex items-center space-x-1.5">
+        <button id="shareBtn" type="button" class="p-2 rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors" title="分享物件" aria-label="分享物件">
+          <Icon name="share-2" class="w-5 h-5" />
+        </button>
+        <button id="favBtn" type="button" class="p-2 rounded-full text-slate-600 hover:text-rose-500 hover:bg-slate-100 transition-colors" title="加入收藏" aria-label="加入收藏">
+          <Icon name="heart" class="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto bg-white min-h-screen shadow-sm border-x border-slate-100">
+
+    <!-- 1. 大圖輪播 -->
+    <section class="relative bg-slate-900">
+      {photos.length > 0 ? (
+        <>
+          <div class="swiper mainSwiper">
+            <div class="swiper-wrapper">
+              {photos.map((src, i) => (
+                <div class="swiper-slide cursor-pointer" data-index={i}>
+                  <div class="aspect-[4/3] w-full bg-slate-100 overflow-hidden relative">
+                    <img src={src} alt={`${title} 第 ${i + 1} 張`} class="w-full h-full object-cover" loading={i < 2 ? 'eager' : 'lazy'} decoding="async" />
+                    <div class="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-xs font-medium px-2.5 py-1 rounded-full">
+                      {i + 1} / {photos.length}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
+          </div>
+
+          <div class="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5 pointer-events-none">
+            {tags.map((t) => (
+              <span class={`${t.cls} backdrop-blur-md text-[11px] font-bold px-2.5 py-1 rounded-md shadow-sm`}>{t.text}</span>
             ))}
           </div>
-          <span class="pp-counter" id="counter">1 / {photos.length}</span>
-        </section>
+
+          {vrUrl && (
+            <a href="#vr-section" class="absolute bottom-[4.9rem] left-3 z-10 flex items-center space-x-1.5 bg-white/90 hover:bg-white text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg backdrop-blur-md active:scale-95">
+              <Icon name="scan" class="w-4 h-4 text-orange-600" />
+              <span>720° VR 實境</span>
+            </a>
+          )}
+
+          {photos.length > 1 && (
+            <div class="p-2 bg-slate-900/60 border-t border-white/10">
+              <div class="swiper thumbsSwiper">
+                <div class="swiper-wrapper">
+                  {photos.map((src) => (
+                    <div class="swiper-slide cursor-pointer rounded-lg overflow-hidden">
+                      <div class="aspect-[4/3] w-full bg-slate-100">
+                        <img src={src} alt="" class="w-full h-full object-cover" loading="lazy" decoding="async" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       ) : (
-        <div class="pp-nophoto">照片整理中</div>
+        <div class="aspect-[4/3] grid place-items-center text-slate-300 text-sm">照片整理中</div>
       )}
+    </section>
 
-      <section class="pp-card pp-head">
-        <p class="pp-region">{district}{roadOf(item) ? `．${roadOf(item)}` : ''}</p>
-        <h1>{title}</h1>
-        <div class="pp-price">
-          {item.originalPrice && <s>{priceText(item.originalPrice)}</s>}
-          <strong>{priceText(item.price)}</strong>
-          {unitPrice && <span class="pp-unit">單價 {unitPrice}</span>}
+    <!-- 2. 價格與標題 -->
+    <section class="p-5 border-b border-slate-100">
+      <div class="flex items-baseline justify-between mb-2">
+        <div class="flex items-baseline space-x-1.5">
+          {item.originalPrice && item.price && item.originalPrice > item.price && (
+            <span class="text-sm text-slate-400 line-through mr-1">{item.originalPrice.toLocaleString('en-US')}</span>
+          )}
+          <span class="text-3xl font-black text-rose-600 tracking-tight">{priceNum}</span>
+          <span class="text-base font-extrabold text-rose-600">{priceUnit}</span>
+          {unitPrice && <span class="text-xs font-medium text-slate-400 ml-1.5">({unitPrice})</span>}
         </div>
-        <ul class="pp-facts">
-          {facts.map((f) => <li>{f}</li>)}
-        </ul>
-      </section>
+        {caseNo && (
+          <span class="text-xs font-mono font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded">案號 #{caseNo}</span>
+        )}
+      </div>
 
-      {d.features?.length > 0 && (
-        <section class="pp-card">
-          <h2>房屋特色</h2>
-          <div class="pp-feat">
-            {d.features.map((l: string) => <p>{l}</p>)}
-          </div>
-        </section>
+      <h1 class="text-xl font-bold text-slate-900 leading-snug tracking-tight mb-3">{title}</h1>
+
+      {address && (
+        <div class="flex items-center text-sm text-slate-500 font-medium">
+          <Icon name="map-pin" class="w-4 h-4 text-slate-400 mr-1.5 shrink-0" />
+          <span>{address}</span>
+          <a href={`https://maps.google.com/?q=${encodeURIComponent(address)}`} target="_blank" rel="noopener" class="ml-2 text-xs font-semibold text-orange-600 hover:underline flex items-center">
+            開啟地圖 <Icon name="external-link" class="w-3 h-3 ml-0.5" />
+          </a>
+        </div>
       )}
+    </section>
 
-      {d.vrUrl && (
-        <section class="pp-card">
-          <h2>720° 實境看屋</h2>
-          <a class="pp-vr" href={d.vrUrl} target="_blank" rel="noopener">🏠 線上走進這間房子</a>
-        </section>
-      )}
-
-      <section class="pp-card">
-        <h2>物件資訊</h2>
-        <dl class="pp-dl">
-          {rows.map(([k, v]) => (
-            <div><dt>{k}</dt><dd>{v}</dd></div>
+    <!-- 3. 四格核心特色卡 -->
+    {specCards.length > 0 && (
+      <section class="p-5 border-b border-slate-100 bg-slate-50/50">
+        <div class={`grid gap-2 text-center ${specCards.length >= 4 ? 'grid-cols-4' : specCards.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          {specCards.map((c) => (
+            <div class="bg-white p-2.5 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-center items-center">
+              <div class="text-slate-400 text-xs font-medium mb-1">{c.label}</div>
+              <div class="text-slate-900 font-extrabold text-base tracking-tight leading-tight">{c.value}</div>
+              <div class="text-slate-400 text-[10px]">{c.sub || ' '}</div>
+            </div>
           ))}
-        </dl>
-        <p class="pp-note">資料來源：永慶不動產公開物件資料，實際以現場及地政機關登記為準。</p>
-      </section>
-
-      <section class="pp-card pp-agent">
-        <div class="pp-agent-name">
-          <strong>{AGENT.name}</strong>
-          <span>{AGENT.store}</span>
         </div>
-        <p>歡迎預約看屋，也可以直接問我這間的細節與周邊行情。</p>
-        <button type="button" class="pp-share" id="shareBtn">分享這間房子</button>
       </section>
+    )}
 
-      <section class="pp-legal">
-        <p>{AGENT.company}</p>
-        <p>{AGENT.broker}</p>
-        <p>{AGENT.agent}</p>
-        <p><a href="/cases">看更多房子</a>　<a href="/">蔡莎拉官網首頁</a></p>
+    <!-- 4. 房屋特色（官網特色說明） -->
+    {features.length > 0 && (
+      <section class="p-5 border-b border-slate-100">
+        <div class="flex items-center space-x-2 mb-4">
+          <div class="w-1.5 h-5 bg-orange-500 rounded-full"></div>
+          <h2 class="text-base font-bold text-slate-900">房屋特色</h2>
+        </div>
+        <div class="space-y-3">
+          {features.map((f, i) => (
+            <div class={`flex items-start space-x-3 p-3.5 rounded-xl border ${i === 0 ? 'bg-orange-50/60 border-orange-100/80' : 'bg-slate-50 border-slate-100'}`}>
+              <div class={`w-6 h-6 rounded-full text-white flex items-center justify-center shrink-0 mt-0.5 ${i === 0 ? 'bg-orange-500' : 'bg-slate-800'}`}>
+                <Icon name="check" class="w-4 h-4" />
+              </div>
+              <div class="text-sm text-slate-700 leading-relaxed">{f}</div>
+            </div>
+          ))}
+        </div>
       </section>
-    </main>
+    )}
 
-    <nav class="pp-cta" aria-label="聯絡蔡莎拉">
-      <a class="pp-btn pp-btn-line" href={AGENT.line} target="_blank" rel="noopener">加 LINE 預約看屋</a>
-      <a class="pp-btn pp-btn-tel" href={`tel:${AGENT.tel}`}>撥電話</a>
-    </nav>
+    <!-- 5. 720° VR（官網有提供才顯示） -->
+    {vrUrl && (
+      <section id="vr-section" class="p-5 border-b border-slate-100">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center space-x-2">
+            <div class="w-1.5 h-5 bg-orange-500 rounded-full"></div>
+            <h2 class="text-base font-bold text-slate-900">720° VR 環景實境找房</h2>
+          </div>
+          <span class="text-xs text-orange-600 font-semibold flex items-center">
+            <Icon name="sparkles" class="w-3.5 h-3.5 mr-1" /> 免出門線上看
+          </span>
+        </div>
+        <div class="relative w-full rounded-2xl overflow-hidden border border-slate-200 bg-slate-900">
+          <div class="aspect-[16/10] w-full">
+            <iframe src={vrUrl} class="w-full h-full border-0" allowfullscreen loading="lazy" title="720 VR 導覽"></iframe>
+          </div>
+        </div>
+        <div class="flex items-center justify-between mt-2.5 px-1">
+          <span class="text-xs text-slate-400">滑動或拖曳可 360 度旋轉查看</span>
+          <a href={vrUrl} target="_blank" rel="noopener" class="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center">
+            全螢幕體驗 <Icon name="maximize-2" class="w-3.5 h-3.5 ml-1" />
+          </a>
+        </div>
+      </section>
+    )}
 
-    <script>
-      const track = document.getElementById('track');
-      const counter = document.getElementById('counter');
-      if (track && counter) {
-        const n = track.children.length;
-        track.addEventListener('scroll', () => {
-          const i = Math.round(track.scrollLeft / track.clientWidth) + 1;
-          counter.textContent = `${Math.min(i, n)} / ${n}`;
-        }, { passive: true });
-      }
-      const share = document.getElementById('shareBtn');
-      share?.addEventListener('click', async () => {
-        const data = { title: document.title, url: location.href.split('?')[0] };
-        try {
-          if (navigator.share) await navigator.share(data);
-          else { await navigator.clipboard.writeText(data.url); share.textContent = '已複製連結'; }
-        } catch (e) { /* 使用者取消分享 */ }
+    <!-- 6. 詳細物件資訊 -->
+    {rows.length > 0 && (
+      <section class="p-5 border-b border-slate-100">
+        <div class="flex items-center space-x-2 mb-4">
+          <div class="w-1.5 h-5 bg-orange-500 rounded-full"></div>
+          <h2 class="text-base font-bold text-slate-900">詳細物件資訊</h2>
+        </div>
+        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-sm">
+          <div class="grid grid-cols-2 gap-y-3 gap-x-4">
+            {rows.map(([k, v]) => (
+              <div class="flex justify-between gap-2 border-b border-slate-200/60 pb-2">
+                <span class="text-slate-400 shrink-0">{k}</span>
+                <span class="font-semibold text-slate-800 text-right break-words min-w-0">{v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-3">資料來源：永慶不動產公開物件資料，實際以現場及地政機關登記為準。</p>
+      </section>
+    )}
+
+    <!-- 7. 莎拉個人品牌卡 -->
+    <section class="p-5 border-b border-slate-100">
+      <div class="bg-gradient-to-br from-amber-50/80 via-orange-50/40 to-white rounded-2xl p-5 border border-orange-200/60">
+        <div class="flex items-center space-x-4 mb-4">
+          <div class="relative">
+            <img src={AGENT.headshot} alt={AGENT.name} class="w-16 h-16 rounded-full object-cover object-top shadow-md border-2 border-white" />
+            <div class="absolute -bottom-1 -right-1 bg-emerald-500 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-white">
+              <Icon name="check" class="w-3 h-3" />
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h3 class="text-lg font-bold text-slate-900">{AGENT.name}</h3>
+              <span class="text-[11px] bg-orange-100 text-orange-800 font-bold px-2 py-0.5 rounded-full">專業經紀人</span>
+            </div>
+            <p class="text-xs text-slate-600 font-medium mt-0.5">{AGENT.store}</p>
+            <p class="text-[11px] text-slate-400">{AGENT.company}</p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed bg-white/70 p-3 rounded-xl border border-orange-100 mb-3">「{AGENT.bio}」</p>
+        <div class="flex items-center justify-between text-xs text-slate-500">
+          <span>諮詢專線：<strong class="text-slate-800 font-bold">{AGENT.tel}</strong></span>
+          <span class="text-emerald-600 font-medium flex items-center">
+            <Icon name="shield-check" class="w-3.5 h-3.5 mr-1" /> 永慶不動產加盟店
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 頁尾 + 法規揭露 -->
+    <footer class="p-6 text-center text-xs text-slate-400 space-y-1">
+      {caseNo && <div>物件編號：{caseNo}｜資料更新時間：{updated}</div>}
+      <div>{AGENT.company}｜{AGENT.store}</div>
+      <div>{AGENT.broker}</div>
+      <div>{AGENT.agent}</div>
+      <div class="pt-2 space-x-3">
+        <a href="/cases" class="text-orange-600 font-semibold">看更多房子</a>
+        <a href="/" class="text-slate-500">蔡莎拉官網首頁</a>
+      </div>
+      <div class="text-[11px] pt-1">版權所有 © {AGENT.brand}. All rights reserved.</div>
+    </footer>
+  </main>
+
+  <!-- 底部固定大按鈕 -->
+  <div class="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200/90 py-2.5 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+    <div class="max-w-md mx-auto flex items-center space-x-2.5" style="padding-bottom: env(safe-area-inset-bottom)">
+      <a href={`tel:${AGENT.tel}`} class="flex-1 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-bold h-12 rounded-xl flex items-center justify-center space-x-1.5 shadow-sm transition-transform">
+        <Icon name="phone-call" class="w-4 h-4 text-amber-400" />
+        <span class="text-sm">撥打電話</span>
+      </a>
+      <a href={AGENT.line} target="_blank" rel="noopener" class="flex-[1.3] bg-line hover:bg-lineHover active:scale-95 text-white font-bold h-12 rounded-xl flex items-center justify-center space-x-1.5 shadow-md transition-transform">
+        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 5.96 2 10.84c0 3.12 1.83 5.86 4.64 7.37-.2.74-.74 2.68-.85 3.09-.13.5.18.49.38.36.16-.1 2.22-1.5 3.12-2.12.87.16 1.78.24 2.71.24 5.52 0 10-3.96 10-8.84S17.52 2 12 2zm-3.8 11.5H6.38a.68.68 0 01-.68-.68V8.68c0-.38.3-.68.68-.68.38 0 .68.3.68.68v3.45H8.2c.38 0 .68.3.68.68 0 .39-.3.69-.68.69zm2.44 0a.68.68 0 01-.68-.68V8.68c0-.38.3-.68.68-.68.38 0 .68.3.68.68v4.14a.68.68 0 01-.68.68zm5.18 0h-1.82a.68.68 0 01-.68-.68V8.68c0-.38.3-.68.68-.68.38 0 .68.3.68.68v3.45h1.14c.38 0 .68.3.68.68 0 .39-.3.69-.68.69zm-2.09-4.82a.68.68 0 01.68.68v2.78l-1.92-2.9a.67.67 0 00-.56-.33.68.68 0 00-.68.68v4.14a.68.68 0 001.36 0V11.4l1.92 2.9c.14.21.37.33.62.33.38 0 .68-.3.68-.68V8.68a.68.68 0 00-.68-.68z"/></svg>
+        <span class="text-sm">加 LINE 聊這間</span>
+      </a>
+      <button id="bookOpen" type="button" class="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 active:scale-95 text-white font-bold h-12 rounded-xl flex items-center justify-center space-x-1 shadow-sm transition-transform">
+        <Icon name="calendar" class="w-4 h-4" />
+        <span class="text-sm">預約帶看</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 預約看屋小視窗：按送出會帶著預約內容開 LINE，由客人自己按送出；網站不留存任何個資 -->
+  <div id="bookModal" class="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl relative">
+      <button id="bookClose" type="button" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1" aria-label="關閉">
+        <Icon name="x" class="w-5 h-5" />
+      </button>
+      <div class="w-12 h-12 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center mb-4">
+        <Icon name="calendar-check-2" class="w-6 h-6" />
+      </div>
+      <h3 class="text-lg font-bold text-slate-900 mb-1">預約現場看屋</h3>
+      <p class="text-xs text-slate-500 mb-4">物件：{title}</p>
+      <form id="bookForm" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1" for="bookName">您的姓名 / 稱呼</label>
+          <input type="text" id="bookName" required placeholder="例如：陳先生" class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1" for="bookPhone">聯絡電話</label>
+          <input type="tel" id="bookPhone" required placeholder="09xx-xxx-xxx" class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1" for="bookTime">方便看屋時間</label>
+          <select id="bookTime" class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white">
+            <option>平日白天 (09:00 - 18:00)</option>
+            <option>平日晚上 (18:00 - 21:00)</option>
+            <option>週末全天皆可</option>
+            <option>電話另外約定</option>
+          </select>
+        </div>
+        <button type="submit" class="w-full h-11 bg-orange-600 hover:bg-orange-700 active:scale-95 text-white font-bold rounded-xl text-sm transition-all shadow-md mt-2">
+          送出預約（開啟 LINE 傳給莎拉）
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 放大看圖 -->
+  <div id="lightbox" class="fixed inset-0 z-[70] bg-black hidden">
+    <button id="lbClose" type="button" class="absolute top-3 right-3 z-10 text-white bg-white/15 rounded-full p-2" aria-label="關閉">
+      <Icon name="x" class="w-6 h-6" />
+    </button>
+    <div class="swiper lbSwiper h-full">
+      <div class="swiper-wrapper">
+        {photos.map((src) => (
+          <div class="swiper-slide flex items-center justify-center">
+            <img src={src} alt="" class="max-w-full max-h-full object-contain" loading="lazy" decoding="async" />
+          </div>
+        ))}
+      </div>
+      <div class="swiper-button-next"></div>
+      <div class="swiper-button-prev"></div>
+    </div>
+  </div>
+
+  <script>
+    import Swiper from 'swiper/bundle';
+    import 'swiper/css/bundle';
+
+    const root = document.getElementById('pp')!;
+    const title = root.dataset.title || '';
+    const caseNo = root.dataset.caseno || '';
+    const lineId = root.dataset.lineId || '';
+
+    // 輪播：主圖＋縮圖；點主圖放大
+    if (document.querySelector('.mainSwiper')) {
+      const thumbs = document.querySelector('.thumbsSwiper')
+        ? new Swiper('.thumbsSwiper', { spaceBetween: 8, slidesPerView: 5, freeMode: true, watchSlidesProgress: true })
+        : null;
+      new Swiper('.mainSwiper', {
+        navigation: { nextEl: '.mainSwiper .swiper-button-next', prevEl: '.mainSwiper .swiper-button-prev' },
+        ...(thumbs ? { thumbs: { swiper: thumbs } } : {}),
       });
-    </script>
-  </body>
-</html>
+    }
+    const lightbox = document.getElementById('lightbox')!;
+    let lb: Swiper | null = null;
+    function openLightbox(i: number) {
+      lightbox.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      if (!lb) {
+        lb = new Swiper('.lbSwiper', { navigation: { nextEl: '.lbSwiper .swiper-button-next', prevEl: '.lbSwiper .swiper-button-prev' } });
+      }
+      lb.slideTo(i, 0);
+    }
+    function closeLightbox() { lightbox.classList.add('hidden'); document.body.style.overflow = ''; }
+    document.querySelectorAll<HTMLElement>('.mainSwiper .swiper-slide').forEach((el) =>
+      el.addEventListener('click', () => openLightbox(Number(el.dataset.index || 0))));
+    document.getElementById('lbClose')?.addEventListener('click', closeLightbox);
 
-<style is:global>
-  .pp { background: var(--paper); padding-bottom: 76px; }
-  .pp-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; }
-  .pp-brand img { height: 30px; width: auto; display: block; }
-  .pp-tel { font-size: 0.9rem; color: var(--ink); text-decoration: none; font-weight: 700; }
-  .pp-main { max-width: 720px; margin: 0 auto; }
-  .pp-gallery { position: relative; background: #000; }
-  .pp-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-  .pp-track::-webkit-scrollbar { display: none; }
-  .pp-track img { flex: 0 0 100%; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; scroll-snap-align: center; }
-  .pp-counter { position: absolute; right: 10px; bottom: 10px; background: rgba(0,0,0,0.6); color: #fff; font-size: 0.8rem; padding: 2px 10px; border-radius: 999px; }
-  .pp-nophoto { aspect-ratio: 4 / 3; display: grid; place-items: center; background: var(--paper-deep); color: var(--text-soft); }
-  .pp-card { background: #fff; margin: 10px 0; padding: 16px 16px 14px; }
-  .pp-card h2 { font-size: 1.05rem; margin: 0 0 10px; padding-left: 10px; border-left: 4px solid var(--gold); }
-  .pp-region { margin: 0 0 4px; color: var(--text-soft); font-size: 0.85rem; }
-  .pp-head h1 { font-size: 1.3rem; line-height: 1.45; margin: 0 0 10px; }
-  .pp-price { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 12px; }
-  .pp-price strong { font-family: var(--font-display); font-size: 2rem; color: var(--brick); line-height: 1.1; }
-  .pp-price s { color: var(--text-soft); font-size: 0.95rem; }
-  .pp-unit { font-size: 0.9rem; color: var(--text-soft); }
-  .pp-facts { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 12px 0 0; }
-  .pp-facts li { background: var(--paper-deep); color: var(--ink); font-size: 0.85rem; padding: 3px 10px; border-radius: 999px; }
-  .pp-feat p { margin: 0 0 0.6em; font-size: 0.98rem; line-height: 1.8; }
-  .pp-vr { display: block; text-align: center; padding: 12px; background: var(--ink); color: #fff; border-radius: var(--radius); text-decoration: none; font-weight: 700; }
-  .pp-dl { margin: 0; }
-  .pp-dl > div { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: 0.95rem; }
-  .pp-dl dt { flex: 0 0 6.5em; color: var(--text-soft); }
-  .pp-dl dd { margin: 0; flex: 1; word-break: break-word; }
-  .pp-note { margin: 10px 0 0; font-size: 0.78rem; color: var(--text-soft); }
-  .pp-agent-name { display: flex; flex-direction: column; margin-bottom: 6px; }
-  .pp-agent-name strong { font-family: var(--font-display); font-size: 1.2rem; }
-  .pp-agent-name span { color: var(--text-soft); font-size: 0.9rem; }
-  .pp-agent p { margin: 0 0 12px; font-size: 0.95rem; }
-  .pp-share { width: 100%; padding: 10px; border: 1px solid var(--gold); background: transparent; color: var(--ink); border-radius: var(--radius); font-size: 0.95rem; font-weight: 700; }
-  .pp-legal { padding: 4px 16px 20px; color: var(--text-soft); font-size: 0.78rem; text-align: center; }
-  .pp-legal p { margin: 2px 0; }
-  .pp-cta { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; gap: 10px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: rgba(255,255,255,0.97); border-top: 1px solid var(--line); box-shadow: 0 -4px 14px rgba(0,0,0,0.08); }
-  .pp-btn { flex: 1; text-align: center; padding: 13px 8px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 1rem; }
-  .pp-btn-line { flex: 1.6; background: #06c755; color: #fff; }
-  .pp-btn-tel { background: var(--brick); color: #fff; }
-  @media (min-width: 760px) {
-    .pp-cta { max-width: 720px; left: 50%; right: auto; transform: translateX(-50%); width: 100%; border-radius: 12px 12px 0 0; }
-  }
-</style>
+    // 分享
+    document.getElementById('shareBtn')?.addEventListener('click', async () => {
+      const data = { title: document.title, text: `${title}｜蔡莎拉推薦`, url: location.href.split('?')[0] };
+      try {
+        if (navigator.share) await navigator.share(data);
+        else { await navigator.clipboard.writeText(data.url); alert('物件連結已複製，可以直接貼給朋友或客人！'); }
+      } catch { /* 取消分享 */ }
+    });
+
+    // 收藏（只記在這支手機的瀏覽器裡）
+    const favBtn = document.getElementById('favBtn')!;
+    const favKey = `fav:${location.pathname}`;
+    const paintFav = (on: boolean) => favBtn.classList.toggle('text-rose-500', on);
+    try { paintFav(localStorage.getItem(favKey) === '1'); } catch { /* 無痕模式等 */ }
+    favBtn.addEventListener('click', () => {
+      const on = !favBtn.classList.contains('text-rose-500');
+      paintFav(on);
+      try { on ? localStorage.setItem(favKey, '1') : localStorage.removeItem(favKey); } catch { /* ignore */ }
+    });
+
+    // 預約帶看：開 LINE 並帶入預約內容，客人自己按送出
+    const modal = document.getElementById('bookModal')!;
+    const setModal = (open: boolean) => { modal.classList.toggle('hidden', !open); modal.classList.toggle('flex', open); };
+    document.getElementById('bookOpen')?.addEventListener('click', () => setModal(true));
+    document.getElementById('bookClose')?.addEventListener('click', () => setModal(false));
+    document.getElementById('bookForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const v = (id: string) => (document.getElementById(id) as HTMLInputElement).value;
+      const msg = `您好莎拉！我想預約看屋：\n📌 物件：${title}${caseNo ? `（案號 #${caseNo}）` : ''}\n👤 姓名：${v('bookName')}\n📞 電話：${v('bookPhone')}\n⏰ 方便時段：${v('bookTime')}\n🔗 ${location.href.split('?')[0]}`;
+      window.open(`https://line.me/R/oaMessage/${lineId}/?${encodeURIComponent(msg)}`, '_blank');
+      setModal(false);
+    });
+  </script>
+</StoreLayout>

@@ -9,6 +9,9 @@ export const AGENT = {
   phone: '0986-793-193',
   tel: '0986793193',
   line: 'https://line.me/ti/p/@saLa193',
+  lineId: '@saLa193',
+  headshot: '/images/sala-headshot.png',
+  bio: '我是莎拉，深耕鶯歌、鳳鳴與八德生活圈。這間房子的細節、周邊行情與看屋安排，都可以直接問我。',
   store: '永慶鶯歌建國捷運加盟店',
   company: '廣輝不動產有限公司',
   // 依不動產經紀業管理條例第21條第2項，廣告需標示經紀業與人員登記資料
@@ -65,4 +68,22 @@ export function titleOf(item: Item): string {
   const full = item.detail?.title as string | undefined;
   const n = item.name || '';
   return /[…]|\.\.\.$/.test(n) && full ? full : n || full || '待售物件';
+}
+
+/** 價格拆成大字數字與單位，例如 1598 → ['1,598','萬']，12500 → ['1.25','億'] */
+export function priceParts(p?: number | null): [string, string] {
+  if (!p) return ['價格洽詢', ''];
+  return p >= 10000
+    ? [(p / 10000).toFixed(2).replace(/\.?0+$/, ''), '億']
+    : [p.toLocaleString('en-US'), '萬'];
+}
+
+/** 特色文字前面的項目符號（⭕●★1. 等）拿掉，版面統一用打勾圖示 */
+export function cleanFeature(line: string): string {
+  return line.replace(/^[\s⭕●○◎★☆■□◆◇▲△✔✅✓•・\-–—]+/, '').replace(/^\d+[.、)）]\s*/, '').trim();
+}
+
+/** 案號顯示：YC1913920 → 1913920 */
+export function caseNoShort(no?: string | null): string {
+  return (no || '').replace(/^YC/i, '');
 }

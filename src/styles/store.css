@@ -1,0 +1,17 @@
+/* 店鋪頁專用樣式（/cases、/p/<id>）：Tailwind ＋ 少量自訂 */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body.store { font-family: 'Noto Sans TC', sans-serif; -webkit-tap-highlight-color: transparent; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Swiper 左右鍵 */
+.store .swiper-button-next, .store .swiper-button-prev {
+  color: #fff; background: rgba(0,0,0,0.35); backdrop-filter: blur(4px);
+  width: 36px; height: 36px; border-radius: 50%;
+}
+.store .swiper-button-next:after, .store .swiper-button-prev:after { font-size: 16px; font-weight: bold; }
+.store .thumbsSwiper .swiper-slide { opacity: 0.6; border: 2px solid transparent; }
+.store .thumbsSwiper .swiper-slide-thumb-active { border-color: #ea580c; opacity: 1; }

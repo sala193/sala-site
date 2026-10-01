@@ -1,0 +1,29 @@
+---
+// Lucide 圖示（建置時直接嵌進頁面，不再從外部載入）
+import share2 from 'lucide-static/icons/share-2.svg?raw';
+import heart from 'lucide-static/icons/heart.svg?raw';
+import mapPin from 'lucide-static/icons/map-pin.svg?raw';
+import externalLink from 'lucide-static/icons/external-link.svg?raw';
+import check from 'lucide-static/icons/check.svg?raw';
+import scan from 'lucide-static/icons/scan.svg?raw';
+import sparkles from 'lucide-static/icons/sparkles.svg?raw';
+import maximize2 from 'lucide-static/icons/maximize-2.svg?raw';
+import phoneCall from 'lucide-static/icons/phone-call.svg?raw';
+import calendar from 'lucide-static/icons/calendar.svg?raw';
+import calendarCheck2 from 'lucide-static/icons/calendar-check-2.svg?raw';
+import x from 'lucide-static/icons/x.svg?raw';
+import shieldCheck from 'lucide-static/icons/shield-check.svg?raw';
+
+const ICONS: Record<string, string> = {
+  'share-2': share2, heart, 'map-pin': mapPin, 'external-link': externalLink, check, scan, sparkles,
+  'maximize-2': maximize2, 'phone-call': phoneCall, calendar, 'calendar-check-2': calendarCheck2, x,
+  'shield-check': shieldCheck,
+};
+const { name, class: cls = 'w-4 h-4' } = Astro.props as { name: string; class?: string };
+const svg = (ICONS[name] || '')
+  .replace(/<!--[\s\S]*?-->/, '')
+  .replace(/class="[^"]*"/, `class="${cls}"`)
+  .replace(/\swidth="\d+"/, '')
+  .replace(/\sheight="\d+"/, '');
+---
+<Fragment set:html={svg} />
