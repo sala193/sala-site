@@ -1,0 +1,215 @@
+---
+// 單案銷售頁：salahome.tw/p/<官網id>
+// 手機優先、無廣告、底部固定「加 LINE／撥電話」。資料來自永慶官網公開頁（listings.json），照片優先用圖庫。
+import '../../styles/global.css';
+import { AGENT, allCases, photosOf, priceText, districtOf, roadOf, titleOf } from '../../lib/store';
+
+export function getStaticPaths() {
+  return allCases().map((item) => ({ params: { id: item.id }, props: { item } }));
+}
+
+const { item } = Astro.props as { item: ReturnType<typeof allCases>[number] };
+const d = (item as any).detail || {};
+const photos = photosOf(item);
+const title = titleOf(item);
+const road = item.address || '';
+const unitPrice = d.unitPrice && /\d/.test(d.unitPrice) ? d.unitPrice : null; // 官網寫「請洽業務」就不顯示，不自己算
+const district = districtOf(item);
+const pageTitle = `${title}｜${AGENT.brand} 心選好宅`;
+const desc = `${item.type || ''} ${road} ${item.rooms || ''} ${item.price ? item.price + '萬' : ''}｜${AGENT.brand}為您服務`.replace(/\s+/g, ' ').trim();
+const shareImage = photos[0];
+
+const facts = [
+  item.type,
+  item.rooms,
+  item.buildingPing ? `建坪 ${item.buildingPing}` : null,
+  d.floorText,
+  item.age != null ? `屋齡 ${item.age} 年` : null,
+].filter(Boolean) as string[];
+
+const rows: [string, string][] = [
+  ['類型', item.type || ''],
+  ['地址', road],
+  ['社區', d.community || ''],
+  ['格局', d.layout || item.rooms || ''],
+  ['樓層', d.floorText || ''],
+  ['建物坪數', d.buildingPing || (item.buildingPing ? `${item.buildingPing}坪` : '')],
+  ['　主建物', d.mainPing || ''],
+  ['　附屬建物', d.annexPing ? `${d.annexPing}${d.annexNote ? ' ' + d.annexNote : ''}` : ''],
+  ['　共同使用', d.sharedPing || ''],
+  ['土地坪數', d.landPing || (item.landPing ? `${item.landPing}坪` : '')],
+  ['登記用途', d.usage || ''],
+  ['車位', d.parking || ''],
+  ['屋齡', item.age != null ? `${item.age} 年` : ''],
+  ['學區', d.school || ''],
+  ['案件編號', item.caseNo || ''],
+].filter(([, v]) => v) as [string, string][];
+---
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={desc} />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    <link rel="icon" href="/images/brand/favicon.png" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="zh_TW" />
+    <meta property="og:url" content={new URL(Astro.url.pathname, Astro.site)} />
+    {shareImage && <meta property="og:image" content={shareImage} />}
+    {shareImage && <meta name="twitter:card" content="summary_large_image" />}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+  </head>
+  <body class="pp">
+    <header class="pp-top">
+      <a class="pp-brand" href="/cases">
+        <img src="/images/brand/sala-logo-horizontal.png" alt={`${AGENT.brand}｜鶯歌．鳳鳴不動產`} />
+      </a>
+      <a class="pp-tel" href={`tel:${AGENT.tel}`}>📞 {AGENT.phone}</a>
+    </header>
+
+    <main class="pp-main">
+      {photos.length ? (
+        <section class="pp-gallery" aria-label="物件照片">
+          <div class="pp-track" id="track">
+            {photos.map((src, i) => (
+              <img src={src} alt={`${title} 第 ${i + 1} 張`} loading={i < 2 ? 'eager' : 'lazy'} decoding="async" />
+            ))}
+          </div>
+          <span class="pp-counter" id="counter">1 / {photos.length}</span>
+        </section>
+      ) : (
+        <div class="pp-nophoto">照片整理中</div>
+      )}
+
+      <section class="pp-card pp-head">
+        <p class="pp-region">{district}{roadOf(item) ? `．${roadOf(item)}` : ''}</p>
+        <h1>{title}</h1>
+        <div class="pp-price">
+          {item.originalPrice && <s>{priceText(item.originalPrice)}</s>}
+          <strong>{priceText(item.price)}</strong>
+          {unitPrice && <span class="pp-unit">單價 {unitPrice}</span>}
+        </div>
+        <ul class="pp-facts">
+          {facts.map((f) => <li>{f}</li>)}
+        </ul>
+      </section>
+
+      {d.features?.length > 0 && (
+        <section class="pp-card">
+          <h2>房屋特色</h2>
+          <div class="pp-feat">
+            {d.features.map((l: string) => <p>{l}</p>)}
+          </div>
+        </section>
+      )}
+
+      {d.vrUrl && (
+        <section class="pp-card">
+          <h2>720° 實境看屋</h2>
+          <a class="pp-vr" href={d.vrUrl} target="_blank" rel="noopener">🏠 線上走進這間房子</a>
+        </section>
+      )}
+
+      <section class="pp-card">
+        <h2>物件資訊</h2>
+        <dl class="pp-dl">
+          {rows.map(([k, v]) => (
+            <div><dt>{k}</dt><dd>{v}</dd></div>
+          ))}
+        </dl>
+        <p class="pp-note">資料來源：永慶不動產公開物件資料，實際以現場及地政機關登記為準。</p>
+      </section>
+
+      <section class="pp-card pp-agent">
+        <div class="pp-agent-name">
+          <strong>{AGENT.name}</strong>
+          <span>{AGENT.store}</span>
+        </div>
+        <p>歡迎預約看屋，也可以直接問我這間的細節與周邊行情。</p>
+        <button type="button" class="pp-share" id="shareBtn">分享這間房子</button>
+      </section>
+
+      <section class="pp-legal">
+        <p>{AGENT.company}</p>
+        <p>{AGENT.broker}</p>
+        <p>{AGENT.agent}</p>
+      </section>
+    </main>
+
+    <nav class="pp-cta" aria-label="聯絡蔡莎拉">
+      <a class="pp-btn pp-btn-line" href={AGENT.line} target="_blank" rel="noopener">加 LINE 預約看屋</a>
+      <a class="pp-btn pp-btn-tel" href={`tel:${AGENT.tel}`}>撥電話</a>
+    </nav>
+
+    <script>
+      const track = document.getElementById('track');
+      const counter = document.getElementById('counter');
+      if (track && counter) {
+        const n = track.children.length;
+        track.addEventListener('scroll', () => {
+          const i = Math.round(track.scrollLeft / track.clientWidth) + 1;
+          counter.textContent = `${Math.min(i, n)} / ${n}`;
+        }, { passive: true });
+      }
+      const share = document.getElementById('shareBtn');
+      share?.addEventListener('click', async () => {
+        const data = { title: document.title, url: location.href.split('?')[0] };
+        try {
+          if (navigator.share) await navigator.share(data);
+          else { await navigator.clipboard.writeText(data.url); share.textContent = '已複製連結'; }
+        } catch (e) { /* 使用者取消分享 */ }
+      });
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  .pp { background: var(--paper); padding-bottom: 76px; }
+  .pp-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; }
+  .pp-brand img { height: 30px; width: auto; display: block; }
+  .pp-tel { font-size: 0.9rem; color: var(--ink); text-decoration: none; font-weight: 700; }
+  .pp-main { max-width: 720px; margin: 0 auto; }
+  .pp-gallery { position: relative; background: #000; }
+  .pp-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .pp-track::-webkit-scrollbar { display: none; }
+  .pp-track img { flex: 0 0 100%; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; scroll-snap-align: center; }
+  .pp-counter { position: absolute; right: 10px; bottom: 10px; background: rgba(0,0,0,0.6); color: #fff; font-size: 0.8rem; padding: 2px 10px; border-radius: 999px; }
+  .pp-nophoto { aspect-ratio: 4 / 3; display: grid; place-items: center; background: var(--paper-deep); color: var(--text-soft); }
+  .pp-card { background: #fff; margin: 10px 0; padding: 16px 16px 14px; }
+  .pp-card h2 { font-size: 1.05rem; margin: 0 0 10px; padding-left: 10px; border-left: 4px solid var(--gold); }
+  .pp-region { margin: 0 0 4px; color: var(--text-soft); font-size: 0.85rem; }
+  .pp-head h1 { font-size: 1.3rem; line-height: 1.45; margin: 0 0 10px; }
+  .pp-price { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 12px; }
+  .pp-price strong { font-family: var(--font-display); font-size: 2rem; color: var(--brick); line-height: 1.1; }
+  .pp-price s { color: var(--text-soft); font-size: 0.95rem; }
+  .pp-unit { font-size: 0.9rem; color: var(--text-soft); }
+  .pp-facts { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 12px 0 0; }
+  .pp-facts li { background: var(--paper-deep); color: var(--ink); font-size: 0.85rem; padding: 3px 10px; border-radius: 999px; }
+  .pp-feat p { margin: 0 0 0.6em; font-size: 0.98rem; line-height: 1.8; }
+  .pp-vr { display: block; text-align: center; padding: 12px; background: var(--ink); color: #fff; border-radius: var(--radius); text-decoration: none; font-weight: 700; }
+  .pp-dl { margin: 0; }
+  .pp-dl > div { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: 0.95rem; }
+  .pp-dl dt { flex: 0 0 6.5em; color: var(--text-soft); }
+  .pp-dl dd { margin: 0; flex: 1; word-break: break-word; }
+  .pp-note { margin: 10px 0 0; font-size: 0.78rem; color: var(--text-soft); }
+  .pp-agent-name { display: flex; flex-direction: column; margin-bottom: 6px; }
+  .pp-agent-name strong { font-family: var(--font-display); font-size: 1.2rem; }
+  .pp-agent-name span { color: var(--text-soft); font-size: 0.9rem; }
+  .pp-agent p { margin: 0 0 12px; font-size: 0.95rem; }
+  .pp-share { width: 100%; padding: 10px; border: 1px solid var(--gold); background: transparent; color: var(--ink); border-radius: var(--radius); font-size: 0.95rem; font-weight: 700; }
+  .pp-legal { padding: 4px 16px 20px; color: var(--text-soft); font-size: 0.78rem; text-align: center; }
+  .pp-legal p { margin: 2px 0; }
+  .pp-cta { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; gap: 10px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: rgba(255,255,255,0.97); border-top: 1px solid var(--line); box-shadow: 0 -4px 14px rgba(0,0,0,0.08); }
+  .pp-btn { flex: 1; text-align: center; padding: 13px 8px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 1rem; }
+  .pp-btn-line { flex: 1.6; background: #06c755; color: #fff; }
+  .pp-btn-tel { background: var(--brick); color: #fff; }
+  @media (min-width: 760px) {
+    .pp-cta { max-width: 720px; left: 50%; right: auto; transform: translateX(-50%); width: 100%; border-radius: 12px 12px 0 0; }
+  }
+</style>

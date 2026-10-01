@@ -29,6 +29,7 @@
 import { writeFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { parseDetail } from './parse-detail.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -72,7 +73,7 @@ function stripTags(html) {
     .trim();
 }
 
-async function fetchDetailImages(id) {
+async function fetchDetail(id) {
   const url = `https://buy.yungching.com.tw/house/${id}`;
   const res = await fetch(url, {
     headers: {
@@ -99,7 +100,7 @@ async function fetchDetailImages(id) {
     seenKeys.add(key);
     images.push(src);
   }
-  return images;
+  return { images, detail: parseDetail(html) };
 }
 
 function extractMaxPage(html) {
@@ -301,7 +302,8 @@ async function main() {
   for (let i = 0; i < listings.length; i++) {
     const item = listings[i];
     try {
-      const images = await fetchDetailImages(item.id);
+      const { images, detail } = await fetchDetail(item.id);
+      item.detail = detail; // 單案銷售頁 /p/<id> 用的詳情欄位
       if (images.length) {
         // 詳情頁相簿的第一張不一定是外觀封面照(有些物件第一張是格局圖)。
         // 列表頁縮圖(item.image)才是永慶官網自己選定的封面照,

@@ -1,0 +1,184 @@
+---
+// 蔡莎拉專屬店鋪：salahome.tw/cases
+// 放全店銷售中的案子（資料天天由永慶官網公開頁自動同步），每件都標蔡莎拉；沒有同業廣告。
+import '../styles/global.css';
+import { AGENT, allCases, photosOf, priceText, districtOf, kindOf, roadOf, titleOf } from '../lib/store';
+
+const cases = allCases().map((it) => ({
+  id: it.id,
+  name: titleOf(it),
+  district: districtOf(it),
+  road: roadOf(it),
+  kind: kindOf(it),
+  type: it.type,
+  rooms: it.rooms,
+  ping: it.buildingPing || it.landPing,
+  price: it.price || 0,
+  originalPrice: it.originalPrice,
+  cover: photosOf(it)[0] || '',
+  isNew: it.isNew,
+}));
+
+const districts = [...new Set(cases.map((c) => c.district))].sort((a, b) =>
+  cases.filter((c) => c.district === b).length - cases.filter((c) => c.district === a).length);
+const kinds = ['住宅', '透天', '店面辦公', '廠房', '土地'].filter((k) => cases.some((c) => c.kind === k));
+const title = `${AGENT.brand}的店鋪｜鶯歌．鳳鳴好房`;
+const desc = `${AGENT.brand}（${AGENT.store}）目前在賣的房子，共 ${cases.length} 間，每間都可以直接問我。`;
+---
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={desc} />
+    <link rel="canonical" href={new URL('/cases', Astro.site)} />
+    <link rel="icon" href="/images/brand/favicon.png" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="zh_TW" />
+    {cases[0]?.cover && <meta property="og:image" content={cases[0].cover} />}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+  </head>
+  <body class="st">
+    <header class="st-hero">
+      <img class="st-logo" src="/images/brand/sala-logo-horizontal.png" alt={`${AGENT.brand}｜鶯歌．鳳鳴不動產`} />
+      <h1>{AGENT.brand}的店鋪</h1>
+      <p>{AGENT.store}　{AGENT.name}</p>
+      <div class="st-hero-cta">
+        <a class="st-btn st-line" href={AGENT.line} target="_blank" rel="noopener">加 LINE 找房</a>
+        <a class="st-btn st-tel" href={`tel:${AGENT.tel}`}>📞 {AGENT.phone}</a>
+      </div>
+    </header>
+
+    <section class="st-filters">
+      <div class="st-chips" id="kindChips">
+        <button class="on" data-kind="">全部 {cases.length}</button>
+        {kinds.map((k) => <button data-kind={k}>{k} {cases.filter((c) => c.kind === k).length}</button>)}
+      </div>
+      <div class="st-row">
+        <select id="district" aria-label="區域">
+          <option value="">全部區域</option>
+          {districts.map((d) => <option value={d}>{d}</option>)}
+        </select>
+        <select id="sort" aria-label="排序">
+          <option value="new">預設排序</option>
+          <option value="asc">總價低到高</option>
+          <option value="desc">總價高到低</option>
+        </select>
+      </div>
+      <p class="st-count" id="count">共 {cases.length} 間</p>
+    </section>
+
+    <main class="st-grid" id="grid">
+      {cases.map((c, i) => (
+        <a class="st-card" href={`/p/${c.id}`} data-kind={c.kind} data-district={c.district} data-price={c.price} data-i={i}>
+          <div class="st-img">
+            {c.cover ? <img src={c.cover} alt={c.name} loading={i < 6 ? 'eager' : 'lazy'} decoding="async" /> : <span>照片整理中</span>}
+            {c.isNew && <em>新上架</em>}
+          </div>
+          <div class="st-body">
+            <p class="st-region">{c.district}{c.road ? `．${c.road}` : ''}</p>
+            <h2>{c.name}</h2>
+            <p class="st-meta">{[c.type, c.rooms, c.ping ? `${c.ping} 坪` : ''].filter(Boolean).join('｜')}</p>
+            <p class="st-price">
+              {c.originalPrice && <s>{priceText(c.originalPrice)}</s>}
+              <strong>{priceText(c.price)}</strong>
+            </p>
+          </div>
+        </a>
+      ))}
+    </main>
+
+    <p class="st-empty" id="empty" hidden>這個條件目前沒有房子，換個條件看看，或直接 LINE 我。</p>
+
+    <footer class="st-foot">
+      <p>{AGENT.company}　{AGENT.store}</p>
+      <p>{AGENT.broker}</p>
+      <p>{AGENT.agent}</p>
+      <p>資料來源：永慶不動產公開物件資料，實際以現場及地政機關登記為準。</p>
+    </footer>
+
+    <nav class="st-cta" aria-label="聯絡蔡莎拉">
+      <a class="st-btn st-line" href={AGENT.line} target="_blank" rel="noopener">加 LINE 找房</a>
+      <a class="st-btn st-tel" href={`tel:${AGENT.tel}`}>撥電話</a>
+    </nav>
+
+    <script>
+      const grid = document.getElementById('grid')!;
+      const cards = [...grid.querySelectorAll<HTMLElement>('.st-card')];
+      const districtSel = document.getElementById('district') as HTMLSelectElement;
+      const sortSel = document.getElementById('sort') as HTMLSelectElement;
+      const chips = [...document.querySelectorAll<HTMLElement>('#kindChips button')];
+      const count = document.getElementById('count')!;
+      const empty = document.getElementById('empty')!;
+      let kind = '';
+      function apply() {
+        let shown = 0;
+        for (const c of cards) {
+          const ok = (!kind || c.dataset.kind === kind) && (!districtSel.value || c.dataset.district === districtSel.value);
+          c.hidden = !ok;
+          if (ok) shown++;
+        }
+        const ordered = [...cards];
+        if (sortSel.value === 'asc') ordered.sort((a, b) => +a.dataset.price! - +b.dataset.price!);
+        else if (sortSel.value === 'desc') ordered.sort((a, b) => +b.dataset.price! - +a.dataset.price!);
+        else ordered.sort((a, b) => +a.dataset.i! - +b.dataset.i!);
+        ordered.forEach((c) => grid.appendChild(c));
+        count.textContent = `共 ${shown} 間`;
+        empty.hidden = shown > 0;
+      }
+      chips.forEach((b) => b.addEventListener('click', () => {
+        kind = b.dataset.kind || '';
+        chips.forEach((x) => x.classList.toggle('on', x === b));
+        apply();
+      }));
+      districtSel.addEventListener('change', apply);
+      sortSel.addEventListener('change', apply);
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  .st { background: var(--paper); padding-bottom: 76px; }
+  .st-hero { text-align: center; padding: 22px 16px 18px; background: #fff; border-bottom: 1px solid var(--line); }
+  .st-logo { height: 38px; width: auto; }
+  .st-hero h1 { font-size: 1.5rem; margin: 10px 0 2px; }
+  .st-hero p { margin: 0; color: var(--text-soft); font-size: 0.9rem; }
+  .st-hero-cta { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+  .st-btn { padding: 11px 18px; border-radius: 10px; text-decoration: none; font-weight: 700; text-align: center; }
+  .st-line { background: #06c755; color: #fff; }
+  .st-tel { background: var(--brick); color: #fff; }
+  .st-filters { max-width: 1080px; margin: 0 auto; padding: 12px 14px 4px; position: sticky; top: 0; z-index: 15; background: var(--paper); }
+  .st-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
+  .st-chips::-webkit-scrollbar { display: none; }
+  .st-chips button { flex: 0 0 auto; border: 1px solid var(--line); background: #fff; color: var(--ink); padding: 6px 14px; border-radius: 999px; font-size: 0.9rem; }
+  .st-chips button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .st-row { display: flex; gap: 8px; }
+  .st-row select { flex: 1; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 0.95rem; }
+  .st-count { margin: 6px 0 2px; font-size: 0.85rem; color: var(--text-soft); }
+  .st-grid { max-width: 1080px; margin: 0 auto; padding: 8px 14px; display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .st-card { display: block; background: #fff; border-radius: 10px; overflow: hidden; text-decoration: none; color: inherit; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .st-card[hidden] { display: none; }
+  .st-img { position: relative; aspect-ratio: 4 / 3; background: var(--paper-deep); display: grid; place-items: center; color: var(--text-soft); }
+  .st-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .st-img em { position: absolute; left: 8px; top: 8px; background: var(--brick); color: #fff; font-style: normal; font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; }
+  .st-body { padding: 10px 12px 12px; }
+  .st-region { margin: 0; font-size: 0.8rem; color: var(--text-soft); }
+  .st-body h2 { font-size: 1rem; line-height: 1.45; margin: 2px 0 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .st-meta { margin: 0; font-size: 0.85rem; color: var(--text-soft); }
+  .st-price { margin: 6px 0 0; display: flex; align-items: baseline; gap: 8px; }
+  .st-price strong { font-family: var(--font-display); font-size: 1.35rem; color: var(--brick); }
+  .st-price s { font-size: 0.8rem; color: var(--text-soft); }
+  .st-empty { text-align: center; color: var(--text-soft); padding: 30px 16px; }
+  .st-foot { text-align: center; color: var(--text-soft); font-size: 0.78rem; padding: 16px 16px 24px; }
+  .st-foot p { margin: 2px 0; }
+  .st-cta { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; gap: 10px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: rgba(255,255,255,0.97); border-top: 1px solid var(--line); box-shadow: 0 -4px 14px rgba(0,0,0,0.08); }
+  .st-cta .st-btn { flex: 1; }
+  .st-cta .st-line { flex: 1.6; }
+  @media (min-width: 640px) { .st-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 980px) { .st-grid { grid-template-columns: repeat(3, 1fr); } }
+</style>
