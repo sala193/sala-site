@@ -29,7 +29,7 @@ const TERMS_LAYOUT = [
   '私人泳池', '有庭院', '一巷住宅', '正面大馬路', '室內無樑柱設計', '室內輕隔間', '三角窗', '頂樓', '次頂樓', '高樓層', '純一樓',
 ];
 const TERMS_LIFE = [
-  '代收垃圾', '天然瓦斯', '免爬樓梯', '景觀宅', '景觀佳', '視野景觀佳', '有裝潢', '裝潢美宅', '室內有消防撒水系統', '有逃生門', '可張掛公司招牌',
+  '冷藏廚餘垃圾室', '垃圾集中處理', '24H警衛管理', '24H保全', '飯店式接待大廳', '健身房', '媽媽教室', '代收垃圾', '天然瓦斯', '免爬樓梯', '景觀宅', '景觀佳', '視野景觀佳', '有裝潢', '裝潢美宅', '室內有消防撒水系統', '有逃生門', '可張掛公司招牌',
   '氣派門廳', '本戶高架地板', '室內水線', '出租中非連鎖店', '出租中連鎖店', '購物商場型店面', '知名夜市內店面', '有車庫', '一樓門前停車方便', '空屋',
 ];
 /** 同義詞：官網寫法不同、意思一樣，標成同一個標籤 */
@@ -66,7 +66,7 @@ export function tagsFor({ type, landPing, text }: TagInput, max = 12): string[] 
   let kind = kindOfType(type);
   const isShop = /店面/.test(text) && kind === '住宅';
   if (isShop) kind = '店面辦公';
-  const flat = text.replace(/\s+/g, '');
+  const flat = text.replace(/\s+/g, '').replace(/２４|24小時/g, '24H');
   const tags: string[] = [];
   const add = (t: string) => { const x = ALIAS[t] || t; if (!tags.includes(x)) tags.push(x); };
 
@@ -222,7 +222,7 @@ function clauses(features: string[]): string[] {
 // 住宅通用詞庫（取自《莎拉文案標籤字典》）：官網文字（案名＋特色）裡「真的有這個詞」才用
 const LOC_TERMS = ['近捷運', '近台鐵', '近高鐵', '近學區', '近商圈', '近公園', '近交流道', '近公車站', '重劃區', '臨火車站'];
 const LAYOUT_TERMS = ['邊間', '三面採光', '雙面採光', '房間皆有窗', '房間都有窗', '廁所有窗', '前後陽台', '無暗房', '雙衛浴', '格局方正', '一層兩戶', '一層一戶', '挑高', '有露台', '前陽台', '後陽台'];
-const LIFE_TERMS = ['代收垃圾', '天然瓦斯', '24H保全', '警衛', '管理員', '景觀佳', '高樓層', '有裝潢', '免爬樓梯', '有車位', '平面車位'];
+const LIFE_TERMS = ['冷藏廚餘垃圾室', '垃圾集中處理', '24H警衛管理', '飯店式接待大廳', '健身房', '媽媽教室', '代收垃圾', '天然瓦斯', '24H保全', '警衛', '管理員', '景觀佳', '高樓層', '有裝潢', '免爬樓梯', '有車位', '平面車位'];
 
 /** 「近X、近Y」併成「近X、Y」讀起來順一點 */
 function joinNear(list: string[]): string {
@@ -297,7 +297,7 @@ export function buildSummary(features: string[], opts: SummaryOpts = {}): string
   const lay = (opts.layout || '').match(/(\d+)房.*?(\d+)廳(\d+)衛/);
   if (lay) facts.push(`${lay[1]}房${lay[2]}廳${lay[3]}衛`);
   if (opts.age != null && opts.age !== '' && Number(opts.age) > 0) facts.push(`屋齡 ${opts.age} 年`);
-  if (opts.type) {
+  if (opts.type && !/住宅|華廈|公寓|大樓|套房/.test(opts.type)) {
     const land = /土地/.test(opts.type);
     facts.push(land ? `土地 ${opts.ping ?? ''} 坪`.replace('  ', ' ') : `${opts.type}${opts.ping ? `，建坪 ${opts.ping} 坪` : ''}`);
   }
