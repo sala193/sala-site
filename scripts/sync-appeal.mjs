@@ -1,6 +1,7 @@
 // 從 Supabase 的公開函式抓兩份資料，存進 src/data：
 //  ‧ appeal.json：莎拉在後台勾的特色亮點（官網案號 → 詞）
-//  ‧ copy.json：莎拉定稿的短評金句（官網案號 → 三個版本＋預設用哪一個）
+//  ‧ copy.json：定稿的「物件特色」一句話（官網案號 → 三個版本＋預設用哪一個）
+//  ‧ notes.json：定稿的「莎拉筆記・必看重點」（官網案號 → 重點卡 [{title, text}]）
 // 兩個函式都只回傳公開要用的內容，沒有任何私人資料。抓不到就保留舊檔，不讓官網壞掉。
 import { writeFileSync, existsSync } from 'node:fs';
 
@@ -22,4 +23,5 @@ async function grab(fn, file, label) {
 }
 
 await grab('store_appeal_features', 'appeal.json', '特色亮點');
-await grab('store_copy_all', 'copy.json', '定稿金句');
+await grab('store_copy_all', 'copy.json', '定稿物件特色');
+await grab('store_notes_all', 'notes.json', '定稿莎拉筆記');

@@ -9,6 +9,7 @@ import { SHARE_EVENT_URL } from '../../lib/agent';
 import { buildModules, buildSummary, tagsFor } from '../../lib/notes';
 import appeal from '../../data/appeal.json';
 import copy from '../../data/copy.json';
+import notesData from '../../data/notes.json';
 
 export function getStaticPaths() {
   return allCases().map((item) => ({ params: { id: item.id }, props: { item } }));
@@ -23,9 +24,11 @@ const address = item.address || '';
 const [priceNum, priceUnit] = priceParts(item.price);
 const unitPrice = d.unitPrice && /\d/.test(d.unitPrice) ? d.unitPrice : null; // 官網寫「請洽業務」就不顯示，不自己算
 const caseNo = caseNoShort(item.caseNo || d.caseNo);
-const notes = buildModules(d.features || [], { landPing: item.landPing, type: item.type }); // 莎拉筆記：官網特色說明歸納成重點卡，不編造
+// 莎拉筆記：有定稿的用定稿，沒有就由官網特色整理
+const finalNotes = (notesData as Record<string, { title: string; text: string }[]>)[item.id];
+const notes = finalNotes && finalNotes.length ? finalNotes : buildModules(d.features || [], { landPing: item.landPing, type: item.type }); // 莎拉筆記：官網特色說明歸納成重點卡，不編造
 const tagList = tagsFor({ type: item.type, landPing: item.landPing, text: `${title} ${[...picked(item.id), ...(d.features || [])].join(' ')}` });
-const autoSummary = buildSummary([...picked(item.id), ...(d.features || [])], { title, price: item.price, floorText: d.floorText, layout: d.layout, community: d.community, age: item.age, type: item.type, ping: item.buildingPing || item.landPing, usage: d.usage }); // 💡 莎拉短評：官網原句挑 3～4 個事實
+const autoSummary = buildSummary([...picked(item.id), ...(d.features || [])], { title, price: item.price, floorText: d.floorText, layout: d.layout, community: d.community, age: item.age, type: item.type, ping: item.buildingPing || item.landPing, usage: d.usage }); // 物件特色：官網原句挑 3～4 個事實
 // 莎拉定稿的金句優先；沒有定稿就用自動產生的
 const cp = (copy as Record<string, { v: string[]; p: number }>)[item.id];
 const finalSummary = cp && cp.v.every((x: string) => x) ? cp.v[Math.min(Math.max(cp.p, 1), 3) - 1] : null;
@@ -187,7 +190,7 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
     {summary && (
       <section class="px-5 py-4 border-b border-slate-100">
         <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-          <div class="text-xs font-bold text-amber-700 mb-1">💡 莎拉短評</div>
+          <div class="text-xs font-bold text-amber-700 mb-1">物件特色</div>
           <p class="text-sm font-semibold text-slate-800 leading-relaxed">{summary}</p>
         </div>
       </section>

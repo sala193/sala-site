@@ -150,7 +150,7 @@ export function caseBubble(c: CardCase, o: BuildOpts) {
       backgroundColor: '#fff7ed',
       cornerRadius: '8px',
       paddingAll: '8px',
-      contents: [text(`💡 莎拉短評：${c.note}`, { size: 'xs', color: '#475569', wrap: true, maxLines: 2 })],
+      contents: [text(`物件特色：${c.note}`, { size: 'xs', color: '#475569', wrap: true, maxLines: 2 })],
     });
   }
 

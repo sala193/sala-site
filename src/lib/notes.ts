@@ -193,7 +193,7 @@ export function buildModules(lines: string[], opts: { landPing?: number | null; 
 }
 
 
-// ───────────────────────── 💡 莎拉短評（卡片與銷售頁頂部的一句話，30～50 字） ─────────────────────────
+// ───────────────────────── 物件特色（卡片與銷售頁頂部的一句話，30～50 字） ─────────────────────────
 // 規則：只從官網原句挑「最有事實的 3～4 個短句」，不加料、不下判斷（不寫罕見、不寫保證）。
 // 總價只在官網案名本身寫「低總價」時才放（那是官網自己的說法，數字是真的）。
 
@@ -284,7 +284,7 @@ export interface SummaryOpts {
 }
 
 export function buildSummary(features: string[], opts: SummaryOpts = {}): string | null {
-  const max = opts.maxChars ?? 50;
+  const max = opts.maxChars ?? 38; // 物件特色 40 字以內（含句號）
   const parts: string[] = [];
   const fits = (t: string) => (parts.join('，') + '，' + t).length <= max;
   const push = (t: string) => { if (t && fits(t)) parts.push(t); };
