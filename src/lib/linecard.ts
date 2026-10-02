@@ -192,9 +192,9 @@ function caseBubble(c: CardCase, o: BuildOpts) {
           layout: 'horizontal',
           spacing: 'sm',
           contents: [
-            { ...button('✕', say(`這間不喜歡：${label}`), 'secondary'), flex: 1 },
+            { ...button('✕', say(`這間不喜歡：${label}`), 'primary', '#94a3b8'), flex: 1 }, // 灰藍：低調
             { ...button('預約看屋', say(`預約看屋：${label}`), 'primary', '#06C755'), flex: 2 },
-            { ...button('♥', say(`收藏這間：${label}`), 'secondary'), flex: 1 },
+            { ...button('♥', say(`收藏這間：${label}`), 'primary', '#f43f5e'), flex: 1 }, // 玫瑰紅：活潑
           ],
         },
       ],
