@@ -22,6 +22,7 @@ import { LIFF_ID } from '../lib/agent';
       </button>
     </div>
     <p id="result" class="hidden mt-4 text-sm font-semibold text-emerald-600"></p>
+    <p id="env" class="mt-6 text-[11px] text-slate-400"></p>
   </main>
 
   <script>
@@ -90,13 +91,18 @@ import { LIFF_ID } from '../lib/agent';
       $('status').textContent = missing ? `有 ${missing} 間找不到，其他 ${cases.length} 間可以傳。` : `準備好了，共 ${cases.length} 間。`;
       $('preview').classList.remove('hidden');
 
+      // 環境資訊（除錯用，小字顯示）
+      const env = `環境：${liff.isInClient() ? 'LINE 內' : '瀏覽器'}／${liff.getOS?.() || '?'}／SDK ${liff.getVersion?.() || '?'}／選好友功能：${liff.isApiAvailable('shareTargetPicker') ? '可用' : '偵測為不可用'}`;
+      $('env').textContent = env;
+
       $('sendBtn').addEventListener('click', async () => {
-        if (!liff.isApiAvailable('shareTargetPicker')) return fail('「選好友傳送」還沒啟用：請到 LINE 開發者後台，LIFF 分頁點 shareTargetPicker 並按 Enable；若已啟用，請改用 LINE 或 Chrome 開。');
+        // 不用 isApiAvailable 擋（外部瀏覽器偵測可能不準），直接呼叫，失敗再把真正的原因顯示出來
         try {
-          const res = await liff.shareTargetPicker(messages);
+          const res = await liff.shareTargetPicker(messages, { isMultiple: true });
           if (res) { $('result').textContent = '已傳送，可以回 LINE 看看。'; $('result').classList.remove('hidden'); }
+          else { $('status').textContent = '沒有傳送（你可能關掉了好友清單）。'; }
         } catch (e: any) {
-          fail(`傳送失敗：${e?.message || e}`);
+          fail(`傳送失敗：${e?.code ? `[${e.code}] ` : ''}${e?.message || e}`);
         }
       });
     }
