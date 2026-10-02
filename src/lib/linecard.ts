@@ -55,6 +55,22 @@ function button(label: string, action: Record<string, unknown>, style: 'primary'
 
 const uri = (u: string) => ({ type: 'uri', uri: u });
 
+/** 比 button 更矮的小按鈕（高約 34px，手指還按得到） */
+function smallBtn(label: string, u: string, color: string, flex: number) {
+  return {
+    type: 'box',
+    layout: 'vertical',
+    flex,
+    backgroundColor: color,
+    cornerRadius: '6px',
+    paddingTop: '7px',
+    paddingBottom: '7px',
+    justifyContent: 'center',
+    action: { type: 'uri', label, uri: u },
+    contents: [text(label, { size: 'sm', weight: 'bold', color: '#ffffff', align: 'center' })],
+  };
+}
+
 export function caseUrl(origin: string, id: string, code: string): string {
   return `${origin}/p/${id}?s=${encodeURIComponent(code)}`;
 }
@@ -136,11 +152,11 @@ export function caseBubble(c: CardCase, o: BuildOpts) {
         ...(c.unitPrice ? [text(c.unitPrice, { size: 'xs', color: '#94a3b8', align: 'end' })] : []),
       ],
     },
-    text(c.title, { weight: 'bold', size: 'sm', color: '#0f172a', wrap: true, maxLines: 2, margin: 'sm' }),
+    text(c.title.replace(/\s*｜\s*/g, ' '), { weight: 'bold', size: 'sm', color: '#0f172a', wrap: true, maxLines: 2, margin: 'sm' }),
   ];
   if (c.address) info.push(text(c.address, { size: 'xxs', color: '#64748b', margin: 'xs' }));
   if (specs.length) {
-    info.push({ type: 'box', layout: 'horizontal', spacing: 'xs', margin: 'md', contents: specs.slice(0, 3).map(chip) });
+    info.push({ type: 'box', layout: 'horizontal', spacing: 'xs', margin: 'md', contents: specs.slice(0, 2).map(chip) });
   }
   if (c.note) {
     info.push({
@@ -150,7 +166,7 @@ export function caseBubble(c: CardCase, o: BuildOpts) {
       backgroundColor: '#fff7ed',
       cornerRadius: '8px',
       paddingAll: '8px',
-      contents: [text(`莎拉筆記：${c.note}`, { size: 'xs', color: '#475569', wrap: true, maxLines: 3 })],
+      contents: [text(`莎拉筆記：${c.note}`, { size: 'xs', color: '#475569', wrap: true, maxLines: 2 })],
     });
   }
 
@@ -192,9 +208,9 @@ export function caseBubble(c: CardCase, o: BuildOpts) {
           layout: 'horizontal',
           spacing: 'sm',
           contents: [
-            { ...button('✕', uri(`${url}&act=no`), 'primary', '#94a3b8'), flex: 1 }, // 灰藍：低調
-            { ...button('預約看屋', uri(`${url}&act=book`), 'primary', '#06C755'), flex: 2 },
-            { ...button('♥', uri(`${url}&act=like`), 'primary', '#f43f5e'), flex: 1 }, // 玫瑰紅：活潑
+            smallBtn('✕', `${url}&act=no`, '#94a3b8', 1), // 灰藍：低調
+            smallBtn('預約看屋', `${url}&act=book`, '#06C755', 2),
+            smallBtn('♥', `${url}&act=like`, '#f43f5e', 1), // 玫瑰紅：活潑
           ],
         },
       ],
