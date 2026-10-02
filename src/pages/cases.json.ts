@@ -6,12 +6,7 @@ import appeal from '../data/appeal.json';
 import manifest from '../data/photo-manifest.json';
 
 /** 莎拉在後台勾的特色亮點（官網案號 → 詞）。沒勾就是空，照官網 */
-type Appeal = string[] | { f?: string[]; n?: string };
-const picked = (id: string): string[] => {
-  const a = (appeal as Record<string, Appeal>)[id];
-  const f = Array.isArray(a) ? a : a?.f || [];
-  return f.map((t) => `${t}，`);
-};
+const picked = (id: string): string[] => ((appeal as Record<string, string[]>)[id] || []).map((t) => `${t}，`);
 
 export const GET: APIRoute = () => {
   const list = allCases().map((it) => {
