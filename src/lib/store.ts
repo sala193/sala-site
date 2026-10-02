@@ -4,22 +4,7 @@ import manifest from '../data/photo-manifest.json';
 import overrides from '../data/overrides.json';
 import { cleanTitle } from './notes';
 
-// 經紀人固定標蔡莎拉（跟永慶工具分享頁一致：不管哪一店接的案子，一律標這組）
-export const AGENT = {
-  name: '蔡茹儀',
-  brand: '蔡莎拉',
-  phone: '0986-793-193',
-  tel: '0986793193',
-  line: 'https://line.me/ti/p/@saLa193',
-  lineId: '@saLa193',
-  headshot: '/images/sala-headshot.png',
-  bio: '我是莎拉，深耕鶯歌、鳳鳴與八德生活圈。這間房子的細節、周邊行情與看屋安排，都可以直接問我。',
-  store: '永慶鶯歌建國捷運加盟店',
-  company: '廣輝不動產有限公司',
-  // 依不動產經紀業管理條例第21條第2項，廣告需標示經紀業與人員登記資料
-  broker: '經紀人：簡梅芳（111）新北經字第003924號',
-  agent: '營業員：蔡茹儀（100）登字第181761號',
-};
+export { AGENT } from './agent';
 
 // 圖庫（Cloudflare R2）公開網址；每件照片路徑 cases/yc<官網id>/NN.webp
 export const PHOTO_BASE = 'https://pub-61c50068c9924c239dfb2d0e0ec9bbd2.r2.dev/cases';

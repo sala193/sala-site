@@ -3,6 +3,7 @@ export default {
   content: [
     './src/pages/p/**/*.astro',
     './src/pages/cases.astro',
+    './src/pages/share.astro',
     './src/components/store/**/*.astro',
     './src/layouts/StoreLayout.astro',
   ],

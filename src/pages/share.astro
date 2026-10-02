@@ -1,0 +1,105 @@
+---
+// LIFF 傳送頁：莎拉從後台按「LINE 配案」會開到這裡（只有莎拉自己用，不給搜尋引擎）。
+// 流程：LINE 登入 → 讀 /cases.json 組出輪播卡 → 莎拉按「選好友並傳送」→ LINE 好友清單 → 傳出去。
+import StoreLayout from '../layouts/StoreLayout.astro';
+import { LIFF_ID } from '../lib/agent';
+---
+<StoreLayout title="LINE 配案傳送｜蔡莎拉" description="莎拉專用：把挑好的房子卡片傳給客戶" path="/share">
+  <meta slot="head" name="robots" content="noindex,nofollow" />
+  <script is:inline src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+  <main class="max-w-md mx-auto min-h-screen bg-white p-5" id="app" data-liff={LIFF_ID}>
+    <h1 class="text-lg font-black text-slate-900">LINE 配案卡</h1>
+    <p id="status" class="text-sm text-slate-500 mt-2">準備中…</p>
+
+    <div id="preview" class="hidden mt-4">
+      <p class="text-xs text-slate-400">客人會收到</p>
+      <div id="greeting" class="mt-1 bg-slate-100 rounded-xl p-3 text-sm text-slate-800 whitespace-pre-line"></div>
+      <p class="text-xs text-slate-400 mt-4">卡片（名片卡＋這幾間）</p>
+      <ul id="caseList" class="mt-1 space-y-2"></ul>
+      <button id="sendBtn" type="button" class="mt-6 w-full h-12 rounded-xl bg-line hover:bg-lineHover active:scale-95 text-white font-bold transition-transform">
+        選好友並傳送
+      </button>
+    </div>
+    <p id="result" class="hidden mt-4 text-sm font-semibold text-emerald-600"></p>
+  </main>
+
+  <script>
+    import { buildShareMessages } from '../lib/linecard';
+    import { AGENT } from '../lib/agent';
+
+    declare const liff: any;
+    const app = document.getElementById('app')!;
+    const $ = (id: string) => document.getElementById(id)!;
+    const fail = (m: string) => { $('status').textContent = m; $('status').className = 'text-sm text-rose-600 mt-2 font-semibold'; };
+
+    // LIFF 轉址時參數可能被收進 liff.state，兩種都看
+    function readParams(): URLSearchParams {
+      const direct = new URLSearchParams(location.search);
+      if (direct.get('ids')) return direct;
+      const st = direct.get('liff.state');
+      if (st) return new URLSearchParams(st.startsWith('?') ? st.slice(1) : st);
+      return direct;
+    }
+
+    async function main() {
+      await liff.init({ liffId: app.dataset.liff });
+      if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
+
+      const p = readParams();
+      const ids = (p.get('ids') || '').split(',').filter((x) => /^\d{5,9}$/.test(x)).slice(0, 8);
+      const greeting = (p.get('g') || '').slice(0, 30);
+      const code = (p.get('s') || '').replace(/[^a-z0-9]/gi, '').slice(0, 12);
+      if (!ids.length) return fail('沒有收到要傳的案件。請回後台勾選案件，再按「LINE 配案」。');
+      if (!greeting) return fail('沒有收到客人的稱呼。請回後台再按一次「LINE 配案」。');
+
+      $('status').textContent = '讀取案件中…';
+      const all = await (await fetch('/cases.json', { cache: 'no-store' })).json();
+      const cases = ids.map((id) => all.find((c: any) => c.id === id)).filter(Boolean);
+      if (!cases.length) return fail('找不到這些案件，可能官網已經下架了。');
+      const missing = ids.length - cases.length;
+
+      const origin = location.origin;
+      const messages = buildShareMessages({
+        origin,
+        greeting,
+        code,
+        agent: {
+          name: AGENT.name, store: AGENT.store, company: AGENT.company, phone: AGENT.phone, tel: AGENT.tel,
+          broker: AGENT.broker, agent: AGENT.agent, headshot: `${origin}${AGENT.headshot}`, lineUrl: AGENT.lineUrl,
+        },
+        cases,
+      });
+
+      $('greeting').textContent = (messages[0] as any).text;
+      const list = $('caseList');
+      list.innerHTML = '';
+      for (const c of cases) {
+        const li = document.createElement('li');
+        li.className = 'flex gap-3 items-center';
+        const img = document.createElement('img');
+        img.src = c.cover; img.alt = ''; img.className = 'w-16 h-12 rounded-lg object-cover bg-slate-100 shrink-0';
+        const t = document.createElement('div');
+        t.className = 'text-sm min-w-0';
+        t.innerHTML = '<div class="font-bold text-slate-900 truncate"></div><div class="text-rose-600 font-bold"></div>';
+        (t.children[0] as HTMLElement).textContent = c.title;
+        (t.children[1] as HTMLElement).textContent = c.priceText;
+        li.append(img, t);
+        list.append(li);
+      }
+      $('status').textContent = missing ? `有 ${missing} 間找不到，其他 ${cases.length} 間可以傳。` : `準備好了，共 ${cases.length} 間。`;
+      $('preview').classList.remove('hidden');
+
+      $('sendBtn').addEventListener('click', async () => {
+        if (!liff.isApiAvailable('shareTargetPicker')) return fail('這個環境不能用「選好友傳送」，請用 LINE 或 Chrome 開。');
+        try {
+          const res = await liff.shareTargetPicker(messages);
+          if (res) { $('result').textContent = '已傳送，可以回 LINE 看看。'; $('result').classList.remove('hidden'); }
+        } catch (e: any) {
+          fail(`傳送失敗：${e?.message || e}`);
+        }
+      });
+    }
+    main().catch((e) => fail(`出了點問題：${e?.message || e}`));
+  </script>
+</StoreLayout>
