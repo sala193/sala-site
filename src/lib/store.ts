@@ -1,6 +1,8 @@
 // 蔡莎拉專屬店鋪：共用設定與小工具（單案頁 /p/<id> 與店鋪 /cases 共用）
 import listings from '../data/listings.json';
 import manifest from '../data/photo-manifest.json';
+import overrides from '../data/overrides.json';
+import { cleanTitle } from './notes';
 
 // 經紀人固定標蔡莎拉（跟永慶工具分享頁一致：不管哪一店接的案子，一律標這組）
 export const AGENT = {
@@ -63,11 +65,14 @@ export function roadOf(item: Item): string {
   return (item.address || '').replace(/^[^市縣]*[市縣][^區鄉鎮市]{1,3}[區鄉鎮市]/, '');
 }
 
-/** 完整案名：列表頁案名被截斷（以…結尾）時，改用詳情頁的完整案名 */
+/** 對外顯示的案名：個別案件有莎拉親自改的（overrides.json）就用她的；否則用官網完整案名，並洗掉浮誇詞與符號 */
 export function titleOf(item: Item): string {
+  const o = (overrides as Record<string, { title?: string }>)[item.id]?.title;
+  if (o) return o;
   const full = item.detail?.title as string | undefined;
   const n = item.name || '';
-  return /[…]|\.\.\.$/.test(n) && full ? full : n || full || '待售物件';
+  const raw = /[…]|\.\.\.$/.test(n) && full ? full : n || full || '待售物件';
+  return cleanTitle(raw);
 }
 
 /** 價格拆成大字數字與單位，例如 1598 → ['1,598','萬']，12500 → ['1.25','億'] */

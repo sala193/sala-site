@@ -36,5 +36,5 @@ for (const id of readdirSync(path.join(root, 'dist/p'))) {
   for (const k of ['室內有電梯', '大地坪', '宜收租', '租客穩定']) if (t.includes(k)) tags[k] = (tags[k] || 0) + 1;
 }
 console.log(JSON.stringify({ pages, vrPages, 官網原文含罐頭詞的頁數: official, 我們生成含罐頭詞: generated, 大樓類出現室內有電梯: elevBad, 標籤用量: tags }, null, 1));
-if (Object.keys(generated).length || elevBad) { console.error('❌ 驗收未過', generatedEx.slice(0, 10)); process.exit(1); }
-console.log('✅ 我們生成的內容：罐頭詞 0、大樓類「室內有電梯」0');
+if (Object.keys(generated).length || Object.keys(official).length || elevBad) { console.error('❌ 驗收未過', generatedEx.slice(0, 10)); process.exit(1); }
+console.log('✅ 全站頁面：罐頭詞 0、大樓類「室內有電梯」0');
