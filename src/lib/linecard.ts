@@ -54,7 +54,6 @@ function button(label: string, action: Record<string, unknown>, style: 'primary'
 }
 
 const uri = (u: string) => ({ type: 'uri', uri: u });
-const say = (t: string) => ({ type: 'message', text: t.slice(0, 300) });
 
 export function caseUrl(origin: string, id: string, code: string): string {
   return `${origin}/p/${id}?s=${encodeURIComponent(code)}`;
@@ -93,7 +92,6 @@ function badge(t: string, bg: string, color: string) {
 
 export function caseBubble(c: CardCase, o: BuildOpts) {
   const url = caseUrl(o.origin, c.id, o.code);
-  const label = `${c.title}${c.caseNo ? `（案號 #${c.caseNo}）` : ''}`;
 
   // 規格標籤：最多 3 個，字要短才排得下
   const specs = [
@@ -187,14 +185,16 @@ export function caseBubble(c: CardCase, o: BuildOpts) {
       contents: [
         button('更多照片(VR+影片)', uri(url), 'primary', '#f97316'),
         {
-          // 四格：左 1＝✕ 不喜歡｜中 2＝預約看屋｜右 1＝♥ 收藏（客人按了會在聊天室說一句話，莎拉看得到）
+          // 四格：左 1＝✕ 不喜歡｜中 2＝預約看屋｜右 1＝♥ 收藏。
+          // LINE 的分享選擇器不收「message／postback」按鈕（整張卡會默默不顯示），所以全部用網址：
+          // 客人按了開啟銷售頁，頁面把動作記到後台（需有效追蹤短碼），莎拉在後台看得到。
           type: 'box',
           layout: 'horizontal',
           spacing: 'sm',
           contents: [
-            { ...button('✕', say(`這間不喜歡：${label}`), 'primary', '#94a3b8'), flex: 1 }, // 灰藍：低調
-            { ...button('預約看屋', say(`預約看屋：${label}`), 'primary', '#06C755'), flex: 2 },
-            { ...button('♥', say(`收藏這間：${label}`), 'primary', '#f43f5e'), flex: 1 }, // 玫瑰紅：活潑
+            { ...button('✕', uri(`${url}&act=no`), 'primary', '#94a3b8'), flex: 1 }, // 灰藍：低調
+            { ...button('預約看屋', uri(`${url}&act=book`), 'primary', '#06C755'), flex: 2 },
+            { ...button('♥', uri(`${url}&act=like`), 'primary', '#f43f5e'), flex: 1 }, // 玫瑰紅：活潑
           ],
         },
       ],
@@ -227,7 +227,7 @@ export function agentBubble(o: BuildOpts) {
       paddingAll: '12px',
       contents: [
         button('LINE 通話', uri(a.lineUrl), 'primary', '#06C755'),
-        button('預約看屋', say('莎拉您好！我想預約看屋，請問什麼時候方便？'), 'primary', '#f97316'),
+        button('預約看屋', uri(`${o.origin}/cases?s=${encodeURIComponent(o.code)}&act=book`), 'primary', '#f97316'),
         button('更多物件', uri(`${o.origin}/cases?s=${encodeURIComponent(o.code)}`), 'secondary'),
       ],
     },

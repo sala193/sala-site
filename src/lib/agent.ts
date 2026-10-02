@@ -19,3 +19,6 @@ export const AGENT = {
 
 
 export const LIFF_ID = '2011832527-Bl1V96Jn';
+
+// 配案卡客人動作回報（Supabase Edge Function，只收有效追蹤短碼）
+export const SHARE_EVENT_URL = 'https://dlfleszjcfeickibjcee.supabase.co/functions/v1/share-event';

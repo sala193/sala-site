@@ -5,6 +5,7 @@
 import StoreLayout from '../../layouts/StoreLayout.astro';
 import Icon from '../../components/store/Icon.astro';
 import { AGENT, allCases, photosOf, priceParts, districtOf, titleOf, caseNoShort } from '../../lib/store';
+import { SHARE_EVENT_URL } from '../../lib/agent';
 import { buildModules, tagsFor } from '../../lib/notes';
 
 export function getStaticPaths() {
@@ -65,7 +66,8 @@ const rows: [string, string][] = [
 const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit' }).replace(/\D+/g, '/').replace(/\/$/, '');
 ---
 <StoreLayout title={pageTitle} description={desc} image={photos[0]} path={`/p/${item.id}`}>
-  <div id="pp" data-title={title} data-caseno={caseNo} data-line-id={AGENT.lineId} class="hidden"></div>
+  <div id="pp" data-title={title} data-caseno={caseNo} data-line-id={AGENT.lineId} data-house={item.id} data-event-url={SHARE_EVENT_URL} class="hidden"></div>
+  <div id="toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-24 z-[80] bg-slate-900/90 text-white text-sm px-4 py-2.5 rounded-full shadow-lg"></div>
 
   <!-- 頂部欄 -->
   <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80">
@@ -451,5 +453,34 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
       window.open(`https://line.me/R/oaMessage/${lineId}/?${encodeURIComponent(msg)}`, '_blank');
       setModal(false);
     });
+
+    // 配案卡來的客人（連結帶莎拉的追蹤短碼）：記下點開／收藏／不喜歡／預約，莎拉在後台看得到。不留任何個資。
+    (() => {
+      const q = new URLSearchParams(location.search);
+      const code = (q.get('s') || '').toLowerCase();
+      const act = q.get('act') || '';
+      if (!/^[a-z2-9]{6}$/.test(code)) return;
+      const house = root.dataset.house || '';
+      const url = root.dataset.eventUrl || '';
+      const kind = ['like', 'no', 'book'].includes(act) ? act : 'view';
+      void fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, house, act: kind }),
+        keepalive: true,
+      }).catch(() => { /* 記錄失敗不影響看房 */ });
+      const toast = document.getElementById('toast');
+      const say = (t: string) => {
+        if (!toast) return;
+        toast.textContent = t;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 4000);
+      };
+      if (kind === 'like') { say('已幫您收藏這間，莎拉會看到'); paintFav(true); try { localStorage.setItem(favKey, '1'); } catch { /* ignore */ } }
+      if (kind === 'no') say('已記下，這間可能不太適合您');
+      if (kind === 'book') setModal(true);
+      // 把動作參數拿掉，避免重新整理或轉傳時重複記錄
+      if (act) { q.delete('act'); history.replaceState(null, '', `${location.pathname}${q.toString() ? '?' + q.toString() : ''}`); }
+    })();
   </script>
 </StoreLayout>
