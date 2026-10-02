@@ -218,6 +218,9 @@ export function caseBubble(c: CardCase, o: BuildOpts) {
   };
 }
 
+/** 縮短標點讓一行放得下：「經紀人：簡梅芳（111）」→「經紀人 簡梅芳(111)」 */
+const tight = (t: string) => t.replace('：', ' ').replace('（', '(').replace('）', ')');
+
 export function agentBubble(o: BuildOpts) {
   const a = o.agent;
   const c = { align: 'center' as const };
@@ -225,7 +228,7 @@ export function agentBubble(o: BuildOpts) {
     type: 'bubble',
     size: SIZE,
     // 圓形頭像（臉完整）＋黃色弧，圖已先做好
-    hero: { type: 'image', url: `${o.origin}/images/sala-card-hero.jpg`, size: 'full', aspectRatio: '20:11', aspectMode: 'cover' },
+    hero: { type: 'image', url: `${o.origin}/images/sala-card-hero.jpg`, size: 'full', aspectRatio: '20:9', aspectMode: 'cover' },
     body: {
       type: 'box',
       layout: 'vertical',
@@ -233,24 +236,23 @@ export function agentBubble(o: BuildOpts) {
       spacing: 'xs',
       contents: [
         ...(o.inlineGreeting ? [text(o.greeting, { size: 'sm', color: '#0f172a', wrap: true, weight: 'bold', ...c })] : []),
-        text('你好', { size: 'xs', color: '#64748b', ...c }),
         {
           type: 'text',
           align: 'center',
           wrap: true,
           contents: [
-            { type: 'span', text: '我是 ', size: 'sm', color: '#475569' },
+            { type: 'span', text: '你好，我是 ', size: 'sm', color: '#475569' },
             { type: 'span', text: '蔡莎拉', size: 'xxl', weight: 'bold', color: '#0f172a' },
             { type: 'span', text: `（${a.name.replace(/^蔡/, '')}）`, size: 'xs', color: '#64748b' },
           ],
         },
-        text(a.phone, { weight: 'bold', size: 'xxl', color: RED, margin: 'sm', ...c }),
+        text(a.phone, { weight: 'bold', size: 'xl', color: RED, margin: 'sm', ...c }),
         text('這是我挑選的合適物件', { size: 'sm', color: '#0f172a', margin: 'md', ...c }),
         text('歡迎隨時連絡我，討論你的喜好', { size: 'sm', color: '#475569', wrap: true, ...c }),
-        text(`${a.store}
-${a.company}
-${a.broker}
-${a.agent}`, { size: 'xxs', color: '#94a3b8', wrap: true, margin: 'lg', ...c }),
+        // 經紀業資訊三行小字（標點縮短避免換行）
+        text(`${a.store} ${a.company}
+${tight(a.broker)}
+${tight(a.agent)}`, { size: 'xxs', color: '#94a3b8', wrap: true, margin: 'lg', ...c }),
       ],
     },
     footer: {
