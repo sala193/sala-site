@@ -67,7 +67,7 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
 ---
 <StoreLayout title={pageTitle} description={desc} image={photos[0]} path={`/p/${item.id}`}>
   <div id="pp" data-title={title} data-caseno={caseNo} data-line-id={AGENT.lineId} data-house={item.id} data-event-url={SHARE_EVENT_URL} class="hidden"></div>
-  <div id="toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-24 z-[80] bg-slate-900/90 text-white text-sm px-4 py-2.5 rounded-full shadow-lg"></div>
+  <div id="toast" class="hidden fixed left-1/2 -translate-x-1/2 top-20 z-[80] bg-slate-900/90 text-white text-sm px-4 py-2.5 rounded-full shadow-lg"></div>
 
   <!-- 頂部欄 -->
   <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80">
@@ -433,7 +433,11 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
     // 收藏（只記在這支手機的瀏覽器裡）
     const favBtn = document.getElementById('favBtn')!;
     const favKey = `fav:${location.pathname}`;
-    const paintFav = (on: boolean) => favBtn.classList.toggle('text-rose-500', on);
+    const paintFav = (on: boolean) => {
+      favBtn.classList.toggle('text-rose-500', on);
+      favBtn.classList.toggle('text-slate-600', !on);
+      favBtn.querySelector('svg')?.setAttribute('fill', on ? 'currentColor' : 'none');
+    };
     try { paintFav(localStorage.getItem(favKey) === '1'); } catch { /* 無痕模式等 */ }
     favBtn.addEventListener('click', () => {
       const on = !favBtn.classList.contains('text-rose-500');
