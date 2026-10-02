@@ -24,7 +24,7 @@ export function extractNotes(lines: string[], max = 8): string[] {
 // 詞前面緊接「無／非／沒」就不標（避免「無頂加」被標成頂加）。
 const TERMS_LOCATION = ['近台鐵', '近高鐵', '近捷運', '近公園', '近公車站', '近學區', '近交流道', '近66號快速道路', '近商圈', '重劃區', '位於知名商圈', '臨火車站'];
 const TERMS_LAYOUT = [
-  '一層兩戶', '一層一戶', '邊間', '三面採光', '雙面採光', '採光佳', '無尾巷', '前後陽台', '前陽台進出', '前陽台', '後陽台', '廁所有窗', '廁開窗', '衛浴開窗', '雙衛浴開窗', '浴室開窗', '廁所有對外窗', '無暗房',
+  '一層兩戶', '一層一戶', '邊間', '三面採光', '雙面採光', '採光佳', '無尾巷', '前後陽台', '前陽台進出', '前陽台', '後陽台', '廁所有窗', '廁開窗', '衛浴開窗', '採光通風好', '雙衛浴開窗', '浴室開窗', '廁所有對外窗', '無暗房',
   '房間皆有窗', '房間都有窗', '全室有窗', '間間開窗', '房房開窗', '戶戶開窗', '各室皆開窗', '有露台', '樓中樓', '雙衛浴', '雙主臥', '孝親房', '格局方正', '挑高無加蓋夾層', '挑高', '永久棟距', '大面寬', '獨棟',
   '私人泳池', '有庭院', '一巷住宅', '正面大馬路', '室內無樑柱設計', '室內輕隔間', '三角窗', '頂樓', '次頂樓', '高樓層', '純一樓',
 ];
@@ -70,7 +70,8 @@ export function tagsFor({ type, landPing, text }: TagInput, max = 12): string[] 
   let kind = kindOfType(type);
   const isShop = /店面/.test(text) && kind === '住宅';
   if (isShop) kind = '店面辦公';
-  const flat = text.replace(/\s+/g, '').replace(/２４|24小時/g, '24H');
+  let flat = text.replace(/\s+/g, '').replace(/２４|24小時/g, '24H');
+  flat += '，' + canonTerms(flat);
   const tags: string[] = [];
   const add = (t: string) => { const x = ALIAS[t] || t; if (!tags.includes(x)) tags.push(x); };
 
@@ -228,8 +229,8 @@ function clauses(features: string[]): string[] {
 
 // 住宅通用詞庫（取自《莎拉文案標籤字典》）：官網文字（案名＋特色）裡「真的有這個詞」才用
 const LOC_TERMS = ['近捷運', '近台鐵', '近高鐵', '近學區', '近商圈', '近公園', '近交流道', '近公車站', '重劃區', '臨火車站'];
-const LAYOUT_TERMS = ['邊間', '三面採光', '雙面採光', '房間皆有窗', '房間都有窗', '全室有窗', '間間開窗', '戶戶開窗', '廁所有窗', '廁開窗', '衛浴開窗', '浴室開窗', '前後陽台', '無暗房', '雙衛浴', '格局方正', '一層兩戶', '一層一戶', '挑高', '有露台', '前陽台', '後陽台'];
-const LIFE_TERMS = ['冷藏廚餘垃圾室', '垃圾集中處理', '24H警衛管理', '飯店式接待大廳', '健身房', '媽媽教室', '代收垃圾', '天然瓦斯', '24H保全', '警衛', '管理員', '景觀佳', '高樓層', '有裝潢', '免爬樓梯', '有車位', '平面車位'];
+const LAYOUT_TERMS = ['樓中樓', '邊間', '採光通風好', '採光佳', '三面採光', '雙面採光', '房間皆有窗', '房間都有窗', '全室有窗', '間間開窗', '戶戶開窗', '廁所有窗', '廁開窗', '衛浴開窗', '浴室開窗', '前後陽台', '無暗房', '雙衛浴', '格局方正', '一層兩戶', '一層一戶', '挑高', '有露台', '前陽台', '後陽台'];
+const LIFE_TERMS = ['全室粉刷', '全室翻新', '全室整修', '冷藏廚餘垃圾室', '垃圾集中處理', '24H警衛管理', '飯店式接待大廳', '健身房', '媽媽教室', '代收垃圾', '天然瓦斯', '24H保全', '警衛', '管理員', '景觀佳', '高樓層', '有裝潢', '免爬樓梯', '有車位', '平面車位'];
 
 /** 「近X、近Y」併成「近X、Y」讀起來順一點 */
 function joinNear(list: string[]): string {
@@ -237,6 +238,34 @@ function joinNear(list: string[]): string {
   const other = list.filter((t) => !t.startsWith('近'));
   const parts = [...(near.length ? ['近' + near.join('、')] : []), ...other];
   return parts.join('、');
+}
+
+
+/** 官網寫法千變萬化：用句型把意思相同的歸到標準詞（只補官網文字裡真的有的意思） */
+export function canonTerms(flat: string): string {
+  const out: string[] = [];
+  if (/(浴廁|衛浴|浴室|廁所|廁|衛生間)[^，。,]{0,8}(對外窗|開窗|有窗|有開窗)|開窗[^，。,]{0,4}(浴廁|衛浴)/.test(flat)) out.push('衛浴開窗');
+  if (/採光通風(好|佳|極佳|良好)|通風採光(好|佳|極佳|良好)/.test(flat)) out.push('採光通風好');
+  else if (/採光(好|佳|極佳|良好|充足)/.test(flat)) out.push('採光佳');
+  const m = flat.match(/全室(粉刷|翻新|整修|重新裝潢|新裝潢)/);
+  if (m) out.push(m[0]);
+  return out.join('');
+}
+
+export interface Landmark { name: string; meters: number | null; rank: number }
+/** 官網「Google資訊」那種句子：「恩主公醫院200公尺步行3分鐘」→ 近恩主公醫院。只取官網寫了距離的地標，近的優先 */
+export function landmarks(features: string[]): Landmark[] {
+  const text = features.join('，');
+  const re = /([一-鿿]{2,9}?(醫院|火車站|捷運站|交流道|國小|國中|公園|夜市|市場|超市|賣場|百貨))\s*(\d{2,4})\s*公尺/g;
+  const order: Record<string, number> = { 醫院: 1, 捷運站: 2, 火車站: 2, 交流道: 3, 國小: 4, 國中: 5, 公園: 6, 夜市: 7, 市場: 8, 超市: 9, 賣場: 9, 百貨: 9 };
+  const out: Landmark[] = [];
+  for (const m of text.matchAll(re)) {
+    const name = m[1].replace(/^[近鄰旁、，：:\s]+/, '');
+    const meters = Number(m[3]);
+    if (meters > 800 || out.some((x) => x.name === name)) continue;
+    out.push({ name, meters, rank: order[m[2]] ?? 9 });
+  }
+  return out.sort((a, b) => a.rank - b.rank || (a.meters ?? 0) - (b.meters ?? 0));
 }
 
 export interface SummaryOpts {
@@ -277,7 +306,8 @@ export function buildSummary(features: string[], opts: SummaryOpts = {}): string
   }
 
   // 第二層：訴求詞庫（地段機能 → 格局採光 → 社區生活），官網文字真的有才用
-  const flat = `${opts.title || ''} ${features.join(' ')}`.replace(/\s+/g, '').replace(/２４|24小時/g, '24H');
+  let flat = `${opts.title || ''} ${features.join(' ')}`.replace(/\s+/g, '').replace(/２４|24小時/g, '24H');
+  flat += '，' + canonTerms(flat);
   const SECURITY = /保全|警衛|管理員/;
   const pick = (terms: string[], n: number) =>
     terms
@@ -290,8 +320,10 @@ export function buildSummary(features: string[], opts: SummaryOpts = {}): string
       .slice(0, n);
   const nearDone = parts.some((t) => /^(近|鄰近|距離|步行|臨)/.test(t) || /捷運|車站|火車/.test(t));
   const layoutHit = pick(LAYOUT_TERMS, 4).filter((t, _i, arr) => !((t === '前陽台' || t === '後陽台') && arr.includes('前後陽台')));
-  const dyn = flat.match(/(?:鄰?近|旁)([一-鿿A-Za-z0-9]{1,8}?(?:火車站|捷運站|車站|學區|商圈|公園|交流道|市場))/);
-  const dynLoc = dyn && !/[無非沒不]/.test(flat.slice(Math.max(0, (dyn.index || 0) - 1), dyn.index)) ? [`近${dyn[1]}`] : [];
+  const dyn = flat.match(/(?:鄰?近|旁)([一-鿿A-Za-z0-9]{1,8}?(?:火車站|捷運站|車站|學區|商圈|公園|交流道|市場|醫院))/);
+  const lm = landmarks(features).slice(0, 2).map((x) => `近${x.name}`);
+  const dynLoc0 = dyn && !/[無非沒不]/.test(flat.slice(Math.max(0, (dyn.index || 0) - 1), dyn.index)) ? [`近${dyn[1]}`] : [];
+  const dynLoc = lm.length ? lm : dynLoc0;
   for (const group of [nearDone ? [] : dynLoc.length ? dynLoc : pick(LOC_TERMS, 3), layoutHit.slice(0, 3), pick(LIFE_TERMS, 3)]) {
     if (parts.length >= 4) break;
     let g = group;
