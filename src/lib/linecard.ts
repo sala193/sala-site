@@ -56,18 +56,18 @@ function button(label: string, action: Record<string, unknown>, style: 'primary'
 const uri = (u: string) => ({ type: 'uri', uri: u });
 
 /** 比 button 更矮的小按鈕（高約 34px，手指還按得到） */
-function smallBtn(label: string, u: string, color: string, flex: number) {
+function smallBtn(label: string, u: string, color: string, flex: number, pad = '7px', size = 'sm') {
   return {
     type: 'box',
     layout: 'vertical',
     flex,
     backgroundColor: color,
     cornerRadius: '6px',
-    paddingTop: '7px',
-    paddingBottom: '7px',
+    paddingTop: pad,
+    paddingBottom: pad,
     justifyContent: 'center',
     action: { type: 'uri', label, uri: u },
-    contents: [text(label, { size: 'sm', weight: 'bold', color: '#ffffff', align: 'center' })],
+    contents: [text(label, { size, weight: 'bold', color: '#ffffff', align: 'center' })],
   };
 }
 
@@ -199,7 +199,7 @@ export function caseBubble(c: CardCase, o: BuildOpts) {
       paddingStart: '12px',
       paddingEnd: '12px',
       contents: [
-        button('更多照片(VR+影片)', uri(url), 'primary', '#f97316'),
+        smallBtn('更多照片(VR+影片)', url, '#f97316', 0, '5px', 'xs'),
         {
           // 四格：左 1＝✕ 不喜歡｜中 2＝預約看屋｜右 1＝♥ 收藏。
           // LINE 的分享選擇器不收「message／postback」按鈕（整張卡會默默不顯示），所以全部用網址：
@@ -208,9 +208,9 @@ export function caseBubble(c: CardCase, o: BuildOpts) {
           layout: 'horizontal',
           spacing: 'sm',
           contents: [
-            smallBtn('✕', `${url}&act=no`, '#94a3b8', 1), // 灰藍：低調
-            smallBtn('預約看屋', `${url}&act=book`, '#06C755', 2),
-            smallBtn('♥', `${url}&act=like`, '#f43f5e', 1), // 玫瑰紅：活潑
+            smallBtn('✕', `${url}&act=no`, '#94a3b8', 1, '13px', 'md'), // 灰藍：低調
+            smallBtn('預約看屋', `${url}&act=book`, '#06C755', 2, '13px', 'md'),
+            smallBtn('♥', `${url}&act=like`, '#f43f5e', 1, '13px', 'md'), // 玫瑰紅：活潑
           ],
         },
       ],
@@ -228,7 +228,7 @@ export function agentBubble(o: BuildOpts) {
     type: 'bubble',
     size: SIZE,
     // 圓形頭像（臉完整）＋黃色弧，圖已先做好
-    hero: { type: 'image', url: `${o.origin}/images/sala-card-hero.jpg`, size: 'full', aspectRatio: '20:9', aspectMode: 'cover' },
+    hero: { type: 'image', url: `${o.origin}/images/sala-card-hero-v2.jpg`, size: 'full', aspectRatio: '20:9', aspectMode: 'cover' },
     body: {
       type: 'box',
       layout: 'vertical',
@@ -250,7 +250,8 @@ export function agentBubble(o: BuildOpts) {
         text('這是我挑選的合適物件', { size: 'sm', color: '#0f172a', margin: 'md', ...c }),
         text('歡迎隨時連絡我，討論你的喜好', { size: 'sm', color: '#475569', wrap: true, ...c }),
         // 經紀業資訊三行小字（標點縮短避免換行）
-        text(`${a.store} ${a.company}
+        text(`${a.store}
+${a.company}
 ${tight(a.broker)}
 ${tight(a.agent)}`, { size: 'xxs', color: '#94a3b8', wrap: true, margin: 'lg', ...c }),
       ],
