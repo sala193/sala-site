@@ -27,11 +27,14 @@ import { LIFF_ID } from '../lib/agent';
       <p class="text-[11px] text-slate-400">診斷用（卡片沒出現時才按）</p>
       <button id="diagMin" type="button" class="mt-2 w-full h-10 rounded-lg border border-slate-300 text-sm text-slate-600">傳「最簡單的測試卡片」</button>
       <button id="diagFlex" type="button" class="mt-2 w-full h-10 rounded-lg border border-slate-300 text-sm text-slate-600">只傳輪播卡（不含問候語文字）</button>
+      <button id="diagAgent" type="button" class="mt-2 w-full h-10 rounded-lg border border-slate-300 text-sm text-slate-600">只傳名片卡</button>
+      <button id="diagSimple" type="button" class="mt-2 w-full h-10 rounded-lg border border-slate-300 text-sm text-slate-600">只傳第一間（簡化版：照片＋價格＋一顆按鈕）</button>
+      <button id="diagFull" type="button" class="mt-2 w-full h-10 rounded-lg border border-slate-300 text-sm text-slate-600">只傳第一間（完整版）</button>
     </div>
   </main>
 
   <script>
-    import { buildShareMessages } from '../lib/linecard';
+    import { buildShareMessages, diagnosticMessages } from '../lib/linecard';
     import { AGENT } from '../lib/agent';
 
     declare const liff: any;
@@ -101,7 +104,7 @@ import { LIFF_ID } from '../lib/agent';
       $('env').textContent = env;
 
       const send = async (msgs: any[], okText: string) => {
-        const btns = ['sendBtn', 'diagMin', 'diagFlex'].map($) as HTMLButtonElement[];
+        const btns = ['sendBtn', 'diagMin', 'diagFlex', 'diagAgent', 'diagSimple', 'diagFull'].map($) as HTMLButtonElement[];
         btns.forEach((b) => (b.disabled = true)); // 防止連按兩次傳兩份
         try {
           // 不用 isApiAvailable 擋（外部瀏覽器偵測可能不準），直接呼叫，失敗再把真正的原因顯示出來
@@ -120,6 +123,10 @@ import { LIFF_ID } from '../lib/agent';
         { type: 'flex', altText: '測試卡片', contents: { type: 'bubble', body: { type: 'box', layout: 'vertical', contents: [{ type: 'text', text: '這是最簡單的測試卡片', weight: 'bold' }] } } },
       ], '已傳送最簡單的測試卡片。'));
       $('diagFlex').addEventListener('click', () => send([messages[1]], '已傳送輪播卡（不含問候語）。'));
+      const dg = diagnosticMessages({ origin, greeting, code, agent: { name: AGENT.name, store: AGENT.store, company: AGENT.company, phone: AGENT.phone, tel: AGENT.tel, broker: AGENT.broker, agent: AGENT.agent, headshot: `${origin}${AGENT.headshot}`, lineUrl: AGENT.lineUrl }, cases });
+      $('diagAgent').addEventListener('click', () => send(dg.agent, '已傳送名片卡。'));
+      $('diagSimple').addEventListener('click', () => send(dg.simple, '已傳送簡化案子卡。'));
+      $('diagFull').addEventListener('click', () => send(dg.full, '已傳送完整案子卡。'));
     }
     main().catch((e) => fail(`出了點問題：${e?.message || e}`));
   </script>

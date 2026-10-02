@@ -91,7 +91,7 @@ function badge(t: string, bg: string, color: string) {
   };
 }
 
-function caseBubble(c: CardCase, o: BuildOpts) {
+export function caseBubble(c: CardCase, o: BuildOpts) {
   const url = caseUrl(o.origin, c.id, o.code);
   const label = `${c.title}${c.caseNo ? `（案號 #${c.caseNo}）` : ''}`;
 
@@ -202,7 +202,7 @@ function caseBubble(c: CardCase, o: BuildOpts) {
   };
 }
 
-function agentBubble(o: BuildOpts) {
+export function agentBubble(o: BuildOpts) {
   const a = o.agent;
   return {
     type: 'bubble',
@@ -245,4 +245,22 @@ export function buildShareMessages(o: BuildOpts) {
       contents: { type: 'carousel', contents: [agentBubble(o), ...o.cases.map((c) => caseBubble(c, o))] },
     },
   ];
+}
+
+/** 診斷用：把卡片拆成小塊，一塊一塊傳，找出 LINE 不收的是哪一塊 */
+export function diagnosticMessages(o: BuildOpts) {
+  const first = o.cases[0];
+  const flex = (alt: string, contents: unknown) => [{ type: 'flex', altText: alt, contents }];
+  const simple = {
+    type: 'bubble',
+    size: SIZE,
+    hero: { type: 'image', url: first.cover, size: 'full', aspectRatio: '16:10', aspectMode: 'cover' },
+    body: { type: 'box', layout: 'vertical', paddingAll: '14px', contents: [text(first.priceText, { weight: 'bold', size: 'xl', color: RED }), text(first.title, { wrap: true, size: 'sm' })] },
+    footer: { type: 'box', layout: 'vertical', contents: [button('查看', uri(caseUrl(o.origin, first.id, o.code)), 'primary', '#f97316')] },
+  };
+  return {
+    agent: flex('名片卡', agentBubble(o)),
+    simple: flex('簡化案子卡', simple),
+    full: flex('完整案子卡', caseBubble(first, o)),
+  };
 }
