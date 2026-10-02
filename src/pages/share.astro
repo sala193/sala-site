@@ -21,23 +21,12 @@ import { LIFF_ID } from '../lib/agent';
         選好友並傳送
       </button>
     </div>
-    <div id="copyRow" class="hidden mt-3">
-      <button id="copyBtn" type="button" class="w-full h-11 rounded-xl border border-slate-300 text-sm font-bold text-slate-700">複製連結（貼到 LINE 裡打開）</button>
-    </div>
     <p id="result" class="hidden mt-4 text-sm font-semibold text-emerald-600"></p>
     <p id="env" class="mt-6 text-[11px] text-slate-400"></p>
-    <div id="diag" class="hidden mt-4 border-t border-slate-100 pt-3">
-      <p class="text-[11px] text-slate-400">診斷用（卡片沒出現時才按）</p>
-      <button id="diagMin" type="button" class="mt-2 w-full h-10 rounded-lg border border-slate-300 text-sm text-slate-600">傳「最簡單的測試卡片」</button>
-      <button id="diagFlex" type="button" class="mt-2 w-full h-10 rounded-lg border border-slate-300 text-sm text-slate-600">只傳輪播卡（不含問候語文字）</button>
-      <button id="diagAgent" type="button" class="mt-2 w-full h-10 rounded-lg border border-slate-300 text-sm text-slate-600">只傳名片卡</button>
-      <button id="diagSimple" type="button" class="mt-2 w-full h-10 rounded-lg border border-slate-300 text-sm text-slate-600">只傳第一間（簡化版：照片＋價格＋一顆按鈕）</button>
-      <button id="diagFull" type="button" class="mt-2 w-full h-10 rounded-lg border border-slate-300 text-sm text-slate-600">只傳第一間（完整版）</button>
-    </div>
   </main>
 
   <script>
-    import { buildShareMessages, diagnosticMessages } from '../lib/linecard';
+    import { buildShareMessages } from '../lib/linecard';
     import { AGENT } from '../lib/agent';
 
     declare const liff: any;
@@ -107,7 +96,7 @@ import { LIFF_ID } from '../lib/agent';
       $('env').textContent = env;
 
       const send = async (msgs: any[], okText: string) => {
-        const btns = ['sendBtn', 'diagMin', 'diagFlex', 'diagAgent', 'diagSimple', 'diagFull'].map($) as HTMLButtonElement[];
+        const btns = ['sendBtn'].map($) as HTMLButtonElement[];
         btns.forEach((b) => (b.disabled = true)); // 防止連按兩次傳兩份
         try {
           // 不用 isApiAvailable 擋（外部瀏覽器偵測可能不準），直接呼叫，失敗再把真正的原因顯示出來
@@ -117,26 +106,11 @@ import { LIFF_ID } from '../lib/agent';
         } catch (e: any) {
           // 顯示 LINE 真正回的錯誤，方便查設定（例如 Scopes 少了 chat_message.write）
           fail(`傳送失敗：${e?.code ? `[${e.code}] ` : ''}${e?.message || e}。請確認 LINE 開發者後台 LIFF 的 Scopes 有 chat_message.write、shareTargetPicker 已開啟。`);
-          $('copyRow').classList.remove('hidden');
         } finally {
           btns.forEach((b) => (b.disabled = false));
         }
       };
       $('sendBtn').addEventListener('click', () => send(messages, '已傳送，可以回 LINE 看看。'));
-      $('copyBtn').addEventListener('click', async () => {
-        // 複製成走 LIFF 的網址（liff.line.me），在 LINE 裡點開才會是 LINE 內瀏覽器
-        const liffUrl = `https://liff.line.me/${app.dataset.liff}?${new URLSearchParams({ ids: ids.join(','), g: greeting, s: code }).toString().replace(/\+/g, '%20')}`;
-        try { await navigator.clipboard.writeText(liffUrl); $('copyBtn').textContent = '已複製，去 LINE 貼上'; } catch { $('copyBtn').textContent = liffUrl; }
-      });
-      $('diag').classList.remove('hidden');
-      $('diagMin').addEventListener('click', () => send([
-        { type: 'flex', altText: '測試卡片', contents: { type: 'bubble', body: { type: 'box', layout: 'vertical', contents: [{ type: 'text', text: '這是最簡單的測試卡片', weight: 'bold' }] } } },
-      ], '已傳送最簡單的測試卡片。'));
-      $('diagFlex').addEventListener('click', () => send([messages[1]], '已傳送輪播卡（不含問候語）。'));
-      const dg = diagnosticMessages({ origin, greeting, code, agent: { name: AGENT.name, store: AGENT.store, company: AGENT.company, phone: AGENT.phone, tel: AGENT.tel, broker: AGENT.broker, agent: AGENT.agent, headshot: `${origin}${AGENT.headshot}`, lineUrl: AGENT.lineUrl }, cases });
-      $('diagAgent').addEventListener('click', () => send(dg.agent, '已傳送名片卡。'));
-      $('diagSimple').addEventListener('click', () => send(dg.simple, '已傳送簡化案子卡。'));
-      $('diagFull').addEventListener('click', () => send(dg.full, '已傳送完整案子卡。'));
     }
     main().catch((e) => fail(`出了點問題：${e?.message || e}`));
   </script>
