@@ -135,7 +135,8 @@ export function caseBubble(c: CardCase, o: BuildOpts) {
         ...(c.unitPrice ? [text(c.unitPrice, { size: 'xs', color: '#94a3b8', align: 'end' })] : []),
       ],
     },
-    text(c.title.replace(/\s*｜\s*/g, ' '), { weight: 'bold', size: 'sm', color: '#0f172a', wrap: true, maxLines: 2, margin: 'sm', paddingEnd: '14px' }),
+    // 標題右邊留一點空，避免被 LINE 輪播的切換箭頭 > 蓋到（用盒子留白，文字元件本身不支援）
+    { type: 'box', layout: 'vertical', margin: 'sm', paddingEnd: '14px', contents: [text(c.title.replace(/\s*｜\s*/g, ' '), { weight: 'bold', size: 'sm', color: '#0f172a', wrap: true, maxLines: 2 })] },
   ];
   if (c.address) info.push(text(c.address, { size: 'xxs', color: '#64748b', margin: 'xs' }));
   if (specs.length) {
