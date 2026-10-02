@@ -122,23 +122,6 @@ export function caseBubble(c: CardCase, o: BuildOpts) {
   if (tagBadges.length) {
     overlays.push({ type: 'box', layout: 'vertical', position: 'absolute', offsetTop: '8px', offsetStart: '8px', spacing: 'xs', contents: tagBadges });
   }
-  if (c.caseNo) {
-    overlays.push({
-      type: 'box',
-      layout: 'vertical',
-      position: 'absolute',
-      offsetBottom: '8px',
-      offsetEnd: '8px',
-      backgroundColor: '#00000099',
-      cornerRadius: '10px',
-      paddingTop: '2px',
-      paddingBottom: '2px',
-      paddingStart: '7px',
-      paddingEnd: '7px',
-      contents: [text(`案號 #${c.caseNo}`, { size: 'xxs', color: '#ffffff' })],
-    });
-  }
-
   const info: unknown[] = [
     {
       type: 'box',
@@ -152,7 +135,7 @@ export function caseBubble(c: CardCase, o: BuildOpts) {
         ...(c.unitPrice ? [text(c.unitPrice, { size: 'xs', color: '#94a3b8', align: 'end' })] : []),
       ],
     },
-    text(c.title.replace(/\s*｜\s*/g, ' '), { weight: 'bold', size: 'sm', color: '#0f172a', wrap: true, maxLines: 2, margin: 'sm' }),
+    text(c.title.replace(/\s*｜\s*/g, ' '), { weight: 'bold', size: 'sm', color: '#0f172a', wrap: true, maxLines: 2, margin: 'sm', paddingEnd: '14px' }),
   ];
   if (c.address) info.push(text(c.address, { size: 'xxs', color: '#64748b', margin: 'xs' }));
   if (specs.length) {
@@ -166,7 +149,7 @@ export function caseBubble(c: CardCase, o: BuildOpts) {
       backgroundColor: '#fff7ed',
       cornerRadius: '8px',
       paddingAll: '8px',
-      contents: [text(`莎拉筆記：${c.note}`, { size: 'xs', color: '#475569', wrap: true, maxLines: 2 })],
+      contents: [text(`💡 莎拉短評：${c.note}`, { size: 'xs', color: '#475569', wrap: true, maxLines: 2 })],
     });
   }
 

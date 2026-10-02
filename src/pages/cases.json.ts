@@ -1,8 +1,12 @@
 // 配案卡用的公開案件清單（只含公開資料）：/cases.json
 import type { APIRoute } from 'astro';
 import { allCases, photosOf, priceParts, roadOf, titleOf, caseNoShort, districtOf, PHOTO_BASE } from '../lib/store';
-import { buildModules, tagsFor } from '../lib/notes';
+import { buildModules, buildSummary, tagsFor } from '../lib/notes';
+import appeal from '../data/appeal.json';
 import manifest from '../data/photo-manifest.json';
+
+/** 莎拉在後台勾的特色亮點（官網案號 → 詞）。沒勾就是空，照官網 */
+const picked = (id: string): string[] => ((appeal as Record<string, string[]>)[id] || []).map((t) => `${t}，`);
 
 export const GET: APIRoute = () => {
   const list = allCases().map((it) => {
@@ -13,8 +17,9 @@ export const GET: APIRoute = () => {
     // 卡片上的一句話：取官網原句，優先租況、建築配置、結構安全；太長就不放（不截斷句子）
     const sentence =
       ['現況租況', '建築配置', '結構安全', '室內規格']
-        .map((t) => mods.find((m) => m.title === t)?.text.split('；')[0])
+        .map((t) => mods.find((m) => m.title === t)?.text.split('。')[0])
         .find((s) => s && s.length <= 40) || null;
+    const summary = buildSummary([...picked(it.id), ...(d.features || [])], { title, price: it.price, floorText: d.floorText, layout: d.layout, community: d.community, age: it.age, type: it.type, ping: it.buildingPing || it.landPing, usage: d.usage });
     const hasR2 = !!(manifest as Record<string, number>)[it.id];
     return {
       id: it.id,
@@ -29,8 +34,9 @@ export const GET: APIRoute = () => {
       ping: it.buildingPing || it.landPing,
       age: it.age,
       floor: d.floorText ? d.floorText.replace('／', '/').replace('樓', 'F') : null,
-      tags: tagsFor({ type: it.type, landPing: it.landPing, text: `${title} ${(d.features || []).join(' ')}` }),
-      note: sentence,
+      tags: tagsFor({ type: it.type, landPing: it.landPing, text: `${title} ${[...picked(it.id), ...(d.features || [])].join(' ')}` }),
+      note: summary || sentence,
+      summary,
       caseNo: caseNoShort(it.caseNo || d.caseNo),
       // LINE 卡片要 JPEG／PNG：有圖庫就用圖庫封面 jpg，沒有就用官網圖（官網圖是 JPEG）
       cover: hasR2 ? `${PHOTO_BASE}/yc${it.id}/cover.jpg` : photosOf(it)[0] || '',
