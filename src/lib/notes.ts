@@ -29,11 +29,11 @@ const TERMS_LAYOUT = [
   '私人泳池', '有庭院', '一巷住宅', '正面大馬路', '室內無樑柱設計', '室內輕隔間', '三角窗', '頂樓', '次頂樓', '高樓層', '純一樓',
 ];
 const TERMS_LIFE = [
-  '冷藏廚餘垃圾室', '垃圾集中處理', '24H警衛管理', '24H保全', '飯店式接待大廳', '健身房', '媽媽教室', '代收垃圾', '天然瓦斯', '免爬樓梯', '景觀宅', '景觀佳', '視野景觀佳', '有裝潢', '裝潢美宅', '室內有消防撒水系統', '有逃生門', '可張掛公司招牌',
+  '冷藏廚餘垃圾室', '垃圾集中處理', '垃圾集中室', '垃圾集中區', '社區專屬垃圾處理室', '24H警衛管理', '24H保全', '飯店式接待大廳', '健身房', '媽媽教室', '代收垃圾', '天然瓦斯', '免爬樓梯', '景觀宅', '景觀佳', '視野景觀佳', '有裝潢', '裝潢美宅', '室內有消防撒水系統', '有逃生門', '可張掛公司招牌',
   '氣派門廳', '本戶高架地板', '室內水線', '出租中非連鎖店', '出租中連鎖店', '購物商場型店面', '知名夜市內店面', '有車庫', '一樓門前停車方便', '空屋',
 ];
 /** 同義詞：官網寫法不同、意思一樣，標成同一個標籤 */
-const ALIAS: Record<string, string> = { 房間都有窗: '房間皆有窗', 前陽台進出: '前陽台', 室內有消房撤水系統: '室內有消防撒水系統' };
+const ALIAS: Record<string, string> = { 垃圾集中處理: '垃圾集中', 垃圾集中室: '垃圾集中', 垃圾集中區: '垃圾集中', 社區專屬垃圾處理室: '垃圾集中', 房間都有窗: '房間皆有窗', 前陽台進出: '前陽台', 室內有消房撤水系統: '室內有消防撒水系統' };
 
 function hasTerm(flat: string, term: string): boolean {
   let from = 0;
@@ -84,6 +84,9 @@ export function tagsFor({ type, landPing, text }: TagInput, max = 12): string[] 
     if (kind === '住宅' && t === '大面寬') continue; // 大樓公設面寬不算大面寬
     if (hasTerm(flat, t)) add(t);
   }
+  // 意思重複的只留一顆：前後陽台＝前陽台＋後陽台；24H警衛管理＝24H保全
+  const dropIf = (a: string, b: string) => { if (tags.includes(a) && tags.includes(b)) tags.splice(tags.indexOf(b), 1); };
+  dropIf('前後陽台', '前陽台'); dropIf('前後陽台', '後陽台'); dropIf('24H警衛管理', '24H保全');
   return tags.slice(0, max);
 }
 
@@ -277,6 +280,7 @@ export function buildSummary(features: string[], opts: SummaryOpts = {}): string
       .filter((t) => hasTerm(flat, t.replace('24H保全', '24H')))
       .filter((t) => !parts.join('').includes(t.replace('24H保全', '保全'))) // 前面已經說過就不重複
       .filter((t) => !(SECURITY.test(t) && SECURITY.test(parts.join('')))) // 保全／警衛只說一次
+      .filter((t, i, arr) => !(SECURITY.test(t) && arr.findIndex((u) => SECURITY.test(u)) !== i)) // 同一組裡也只留一個
       .slice(0, n);
   const nearDone = parts.some((t) => /^(近|鄰近|距離|步行|臨)/.test(t) || /捷運|車站|火車/.test(t));
   const layoutHit = pick(LAYOUT_TERMS, 4).filter((t, _i, arr) => !((t === '前陽台' || t === '後陽台') && arr.includes('前後陽台')));
@@ -286,7 +290,7 @@ export function buildSummary(features: string[], opts: SummaryOpts = {}): string
     if (parts.length >= 4) break;
     let g = group;
     while (g.length && !fits(joinNear(g))) g = g.slice(0, -1);
-    if (g.length) push(joinNear(g));
+    if (g.length) push(joinNear(g).replace('垃圾集中處理', '垃圾集中處理免追垃圾車'));
   }
 
   // 第三層：官網結構化欄位（社區、樓層、格局、屋齡）。詞庫不夠 2 個重點時，用事實補
