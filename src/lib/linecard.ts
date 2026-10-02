@@ -185,17 +185,18 @@ function caseBubble(c: CardCase, o: BuildOpts) {
       paddingStart: '12px',
       paddingEnd: '12px',
       contents: [
-        button('查看完整物件', uri(url), 'primary', '#f97316'),
+        button('更多照片(VR+影片)', uri(url), 'primary', '#f97316'),
         {
+          // 四格：左 1＝✕ 不喜歡｜中 2＝預約看屋｜右 1＝♥ 收藏（客人按了會在聊天室說一句話，莎拉看得到）
           type: 'box',
           layout: 'horizontal',
           spacing: 'sm',
           contents: [
-            button('預約看屋', say(`預約看屋：${label}`), 'primary', '#06C755'),
-            button('打電話給莎拉', uri(o.agent.lineUrl), 'secondary'), // 莎拉給的 LINE 連結（LINE 通話）
+            { ...button('✕', say(`這間不喜歡：${label}`), 'secondary'), flex: 1 },
+            { ...button('預約看屋', say(`預約看屋：${label}`), 'primary', '#06C755'), flex: 2 },
+            { ...button('♥', say(`收藏這間：${label}`), 'secondary'), flex: 1 },
           ],
         },
-        button('不喜歡', say(`這間不喜歡：${label}`), 'link'),
       ],
     },
   };
