@@ -22,6 +22,7 @@ export const GET: APIRoute = () => {
       price: it.price,
       originalPrice: it.originalPrice,
       priceText: it.price ? `${pn} ${pu}` : '價格洽詢',
+      unitPrice: d.unitPrice && /\d/.test(d.unitPrice) ? d.unitPrice : null, // 官網寫「請洽業務」就不放
       address: `${districtOf(it)}${roadOf(it)}`,
       type: it.type,
       rooms: it.rooms,

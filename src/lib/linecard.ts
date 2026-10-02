@@ -1,5 +1,6 @@
 // LINE 配案輪播卡（Flex Message）：莎拉從後台傳給客戶用。
-// 第一張＝莎拉名片，後面每間案子一張。客人看得到的只有：稱呼、案子公開資料、莎拉的聯絡方式。
+// 第一張＝莎拉名片，後面每間案子一張（版型＝「LINE配案輪播卡_手機預覽模擬器.html」）。
+// 客人看得到的只有：稱呼、案子公開資料、莎拉的聯絡方式。
 // 絕不放：內部備忘、電話後四碼、全名、底價、貸款估值。
 
 export interface CardCase {
@@ -8,6 +9,7 @@ export interface CardCase {
   price: number | null;
   originalPrice?: number | null;
   priceText: string; // 例：4,900 萬
+  unitPrice?: string | null; // 官網寫的單價，例：34.76萬/坪（官網寫「請洽業務」就沒有）
   address: string;
   type?: string | null;
   rooms?: string | null;
@@ -29,7 +31,7 @@ export interface CardAgent {
   broker: string;
   agent: string;
   headshot: string; // https 絕對網址
-  lineUrl: string; // 加好友連結
+  lineUrl: string; // 莎拉的 LINE 連結（LINE 通話／加好友）
 }
 
 export interface BuildOpts {
@@ -41,6 +43,7 @@ export interface BuildOpts {
 }
 
 const RED = '#e11d48';
+const SIZE = 'mega';
 
 function text(t: string, extra: Record<string, unknown> = {}) {
   return { type: 'text', text: t, ...extra };
@@ -57,51 +60,132 @@ export function caseUrl(origin: string, id: string, code: string): string {
   return `${origin}/p/${id}?s=${encodeURIComponent(code)}`;
 }
 
+/** 規格小標籤（灰底圓角） */
+function chip(t: string) {
+  return {
+    type: 'box',
+    layout: 'vertical',
+    flex: 0,
+    backgroundColor: '#f1f5f9',
+    cornerRadius: '4px',
+    paddingTop: '3px',
+    paddingBottom: '3px',
+    paddingStart: '6px',
+    paddingEnd: '6px',
+    contents: [text(t, { size: 'xxs', color: '#334155', weight: 'bold' })],
+  };
+}
+
+/** 照片左上角的標籤膠囊 */
+function badge(t: string, bg: string, color: string) {
+  return {
+    type: 'box',
+    layout: 'vertical',
+    backgroundColor: bg,
+    cornerRadius: '4px',
+    paddingTop: '2px',
+    paddingBottom: '2px',
+    paddingStart: '6px',
+    paddingEnd: '6px',
+    contents: [text(t, { size: 'xxs', color, weight: 'bold' })],
+  };
+}
+
 function caseBubble(c: CardCase, o: BuildOpts) {
   const url = caseUrl(o.origin, c.id, o.code);
   const label = `${c.title}${c.caseNo ? `（案號 #${c.caseNo}）` : ''}`;
-  const specs = [c.ping ? `建坪 ${c.ping}` : '', c.rooms || '', c.floor || '', c.age != null ? `${c.age}年` : '']
-    .filter(Boolean)
-    .join('｜');
-  const body: unknown[] = [
+
+  // 規格標籤：最多 3 個，字要短才排得下
+  const specs = [
+    c.ping ? `建坪 ${c.ping} 坪` : '',
+    c.rooms || c.type || '',
+    c.age != null ? `${c.age} 年` : c.floor || '',
+  ].filter(Boolean);
+
+  // 照片上的疊加：左上標籤、右下案號
+  const overlays: unknown[] = [];
+  const tagBadges = c.tags.slice(0, 2).map((t, i) => badge(t, i === 0 ? '#0f172acc' : '#047857d9', i === 0 ? '#fcd34d' : '#ffffff'));
+  if (tagBadges.length) {
+    overlays.push({ type: 'box', layout: 'vertical', position: 'absolute', offsetTop: '8px', offsetStart: '8px', spacing: 'xs', contents: tagBadges });
+  }
+  if (c.caseNo) {
+    overlays.push({
+      type: 'box',
+      layout: 'vertical',
+      position: 'absolute',
+      offsetBottom: '8px',
+      offsetEnd: '8px',
+      backgroundColor: '#00000099',
+      cornerRadius: '10px',
+      paddingTop: '2px',
+      paddingBottom: '2px',
+      paddingStart: '7px',
+      paddingEnd: '7px',
+      contents: [text(`案號 #${c.caseNo}`, { size: 'xxs', color: '#ffffff' })],
+    });
+  }
+
+  const info: unknown[] = [
     {
       type: 'box',
       layout: 'baseline',
       contents: [
-        text(c.priceText, { weight: 'bold', size: 'xl', color: RED, flex: 0 }),
+        text(c.priceText.replace(/\s*萬$/, ''), { weight: 'bold', size: 'xxl', color: RED, flex: 0 }),
+        text(' 萬', { weight: 'bold', size: 'sm', color: RED, flex: 0 }),
         ...(c.originalPrice && c.price && c.originalPrice > c.price
-          ? [text(`  原 ${c.originalPrice.toLocaleString('en-US')}`, { size: 'xs', color: '#94a3b8', decoration: 'line-through', flex: 0 })]
+          ? [text(`  原 ${c.originalPrice.toLocaleString('en-US')}`, { size: 'xxs', color: '#94a3b8', decoration: 'line-through', flex: 0 })]
           : []),
+        ...(c.unitPrice ? [text(c.unitPrice, { size: 'xs', color: '#94a3b8', align: 'end' })] : []),
       ],
     },
-    text(c.title, { weight: 'bold', size: 'md', color: '#0f172a', wrap: true, maxLines: 2, margin: 'xs' }),
+    text(c.title, { weight: 'bold', size: 'sm', color: '#0f172a', wrap: true, maxLines: 2, margin: 'sm' }),
   ];
-  if (c.address) body.push(text(c.address, { size: 'xs', color: '#64748b', margin: 'xs' }));
-  if (specs) body.push(text(specs, { size: 'xs', color: '#475569', wrap: true, margin: 'sm' }));
-  if (c.tags.length) body.push(text(c.tags.slice(0, 4).join('・'), { size: 'xs', color: '#c2410c', wrap: true, margin: 'sm' }));
+  if (c.address) info.push(text(c.address, { size: 'xxs', color: '#64748b', margin: 'xs' }));
+  if (specs.length) {
+    info.push({ type: 'box', layout: 'horizontal', spacing: 'xs', margin: 'md', contents: specs.slice(0, 3).map(chip) });
+  }
   if (c.note) {
-    body.push({
+    info.push({
       type: 'box',
       layout: 'vertical',
       margin: 'md',
       backgroundColor: '#fff7ed',
-      cornerRadius: '6px',
+      cornerRadius: '8px',
       paddingAll: '8px',
-      contents: [text(c.note, { size: 'xs', color: '#4b5563', wrap: true, maxLines: 3 })],
+      contents: [text(`莎拉筆記：${c.note}`, { size: 'xs', color: '#475569', wrap: true, maxLines: 3 })],
     });
   }
+
   return {
     type: 'bubble',
-    size: 'kilo',
-    hero: { type: 'image', url: c.cover, size: 'full', aspectRatio: '4:3', aspectMode: 'cover', action: uri(url) },
-    body: { type: 'box', layout: 'vertical', paddingAll: '14px', contents: body },
+    size: SIZE,
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      paddingAll: '0px',
+      contents: [
+        {
+          type: 'box',
+          layout: 'vertical',
+          paddingAll: '0px',
+          contents: [
+            { type: 'image', url: c.cover, size: 'full', aspectRatio: '16:10', aspectMode: 'cover', action: uri(url) },
+            ...overlays,
+          ],
+        },
+        { type: 'box', layout: 'vertical', paddingAll: '14px', contents: info },
+      ],
+    },
     footer: {
       type: 'box',
       layout: 'vertical',
       spacing: 'sm',
-      paddingAll: '12px',
+      paddingTop: '0px',
+      paddingBottom: '12px',
+      paddingStart: '12px',
+      paddingEnd: '12px',
       contents: [
-        button('查看完整物件', uri(url), 'primary', '#ea580c'),
+        button('查看完整物件', uri(url), 'primary', '#f97316'),
         {
           type: 'box',
           layout: 'horizontal',
@@ -121,7 +205,7 @@ function agentBubble(o: BuildOpts) {
   const a = o.agent;
   return {
     type: 'bubble',
-    size: 'kilo',
+    size: SIZE,
     hero: { type: 'image', url: a.headshot, size: 'full', aspectRatio: '1:1', aspectMode: 'cover' },
     body: {
       type: 'box',
@@ -142,7 +226,7 @@ function agentBubble(o: BuildOpts) {
       paddingAll: '12px',
       contents: [
         button('LINE 通話', uri(a.lineUrl), 'primary', '#06C755'),
-        button('預約看屋', say('莎拉您好！我想預約看屋，請問什麼時候方便？'), 'primary', '#ea580c'),
+        button('預約看屋', say('莎拉您好！我想預約看屋，請問什麼時候方便？'), 'primary', '#f97316'),
         button('更多物件', uri(`${o.origin}/cases?s=${encodeURIComponent(o.code)}`), 'secondary'),
       ],
     },
