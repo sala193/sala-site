@@ -48,7 +48,7 @@ import { LIFF_ID } from '../lib/agent';
 
       const p = readParams();
       const ids = (p.get('ids') || '').split(',').filter((x) => /^\d{5,9}$/.test(x)).slice(0, 8);
-      const greeting = (p.get('g') || '').slice(0, 30);
+      const greeting = (p.get('g') || '').replace(/\+/g, ' ').slice(0, 30); // 舊連結的 + 當空白
       const code = (p.get('s') || '').replace(/[^a-z0-9]/gi, '').slice(0, 12);
       if (!ids.length) return fail('沒有收到要傳的案件。請回後台勾選案件，再按「LINE 配案」。');
       if (!greeting) return fail('沒有收到客人的稱呼。請回後台再按一次「LINE 配案」。');
@@ -91,7 +91,7 @@ import { LIFF_ID } from '../lib/agent';
       $('preview').classList.remove('hidden');
 
       $('sendBtn').addEventListener('click', async () => {
-        if (!liff.isApiAvailable('shareTargetPicker')) return fail('這個環境不能用「選好友傳送」，請用 LINE 或 Chrome 開。');
+        if (!liff.isApiAvailable('shareTargetPicker')) return fail('「選好友傳送」還沒啟用：請到 LINE 開發者後台，LIFF 分頁點 shareTargetPicker 並按 Enable；若已啟用，請改用 LINE 或 Chrome 開。');
         try {
           const res = await liff.shareTargetPicker(messages);
           if (res) { $('result').textContent = '已傳送，可以回 LINE 看看。'; $('result').classList.remove('hidden'); }
