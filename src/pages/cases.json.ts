@@ -3,6 +3,7 @@ import type { APIRoute } from 'astro';
 import { allCases, photosOf, priceParts, roadOf, titleOf, caseNoShort, districtOf, PHOTO_BASE } from '../lib/store';
 import { buildModules, buildSummary, tagsFor } from '../lib/notes';
 import appeal from '../data/appeal.json';
+import copy from '../data/copy.json';
 import manifest from '../data/photo-manifest.json';
 
 /** 莎拉在後台勾的特色亮點（官網案號 → 詞）。沒勾就是空，照官網 */
@@ -20,6 +21,10 @@ export const GET: APIRoute = () => {
         .map((t) => mods.find((m) => m.title === t)?.text.split('。')[0])
         .find((s) => s && s.length <= 40) || null;
     const summary = buildSummary([...picked(it.id), ...(d.features || [])], { title, price: it.price, floorText: d.floorText, layout: d.layout, community: d.community, age: it.age, type: it.type, ping: it.buildingPing || it.landPing, usage: d.usage });
+    // 莎拉定稿的三個版本（①簡潔 ②家庭 ③交通），預設用她挑的那個；沒有定稿就用自動產生的
+    const cp = (copy as Record<string, { v: string[]; p: number }>)[it.id];
+    const variants = cp && cp.v.every((x) => x) ? cp.v : null;
+    const finalSummary = variants ? variants[Math.min(Math.max(cp.p, 1), 3) - 1] : null;
     const hasR2 = !!(manifest as Record<string, number>)[it.id];
     return {
       id: it.id,
@@ -35,8 +40,9 @@ export const GET: APIRoute = () => {
       age: it.age,
       floor: d.floorText ? d.floorText.replace('／', '/').replace('樓', 'F') : null,
       tags: tagsFor({ type: it.type, landPing: it.landPing, text: `${title} ${[...picked(it.id), ...(d.features || [])].join(' ')}` }),
-      note: summary || sentence,
-      summary,
+      note: finalSummary || summary || sentence,
+      summary: finalSummary || summary,
+      variants,
       caseNo: caseNoShort(it.caseNo || d.caseNo),
       // LINE 卡片要 JPEG／PNG：有圖庫就用圖庫封面 jpg，沒有就用官網圖（官網圖是 JPEG）
       cover: hasR2 ? `${PHOTO_BASE}/yc${it.id}/cover.jpg` : photosOf(it)[0] || '',

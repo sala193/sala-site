@@ -56,7 +56,10 @@ import { LIFF_ID } from '../lib/agent';
 
       $('status').textContent = '讀取案件中…';
       const all = await (await fetch('/cases.json', { cache: 'no-store' })).json();
-      const cases = ids.map((id) => all.find((c: any) => c.id === id)).filter(Boolean);
+      // 金句版本：v=1 簡潔／2 家庭／3 交通；沒帶（或這間沒有定稿金句）就用原本的
+      const ver = Number(p.get('v') || 0);
+      const cases = ids.map((id) => all.find((c: any) => c.id === id)).filter(Boolean)
+        .map((c: any) => (ver >= 1 && ver <= 3 && c.variants?.[ver - 1] ? { ...c, note: c.variants[ver - 1] } : c));
       if (!cases.length) return fail('找不到這些案件，可能官網已經下架了。');
       const missing = ids.length - cases.length;
 

@@ -24,14 +24,14 @@ jobs:
       - name: 抓取永慶房仲網物件清單
         run: node scripts/sync-listings.mjs
 
-      - name: 抓取莎拉勾選的特色亮點
+      - name: 抓取莎拉勾選的特色亮點與定稿金句
         run: node scripts/sync-appeal.mjs
 
       - name: 提交並推送(若有變更)
         run: |
           git config user.name "sala-listings-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add src/data/listings.json src/data/appeal.json .sync-debug 2>/dev/null || git add src/data/listings.json src/data/appeal.json
+          git add src/data/listings.json src/data/appeal.json src/data/copy.json .sync-debug 2>/dev/null || git add src/data/listings.json src/data/appeal.json src/data/copy.json
           if git diff --staged --quiet; then
             echo "沒有變化,略過提交"
           else
