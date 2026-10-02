@@ -115,13 +115,9 @@ import { LIFF_ID } from '../lib/agent';
           if (res) { $('result').textContent = okText; $('result').classList.remove('hidden'); }
           else { $('status').textContent = '沒有傳送（你可能關掉了好友清單）。'; }
         } catch (e: any) {
-          if (e?.code === 'FORBIDDEN') {
-            // 電腦版 Chrome 這類外部瀏覽器，LINE 不開放「選好友傳送」；要在 LINE 裡面（手機或電腦版 LINE）打開才行
-            fail('這個瀏覽器不能「選好友傳送」（LINE 規定只能在 LINE 裡面用）。請用手機的 LINE，或按下面的「複製連結」，貼到 LINE 電腦版的聊天室（例如你自己的記事本），在 LINE 裡點開再傳。');
-            $('copyRow').classList.remove('hidden');
-          } else {
-            fail(`傳送失敗：${e?.code ? `[${e.code}] ` : ''}${e?.message || e}`);
-          }
+          // 顯示 LINE 真正回的錯誤，方便查設定（例如 Scopes 少了 chat_message.write）
+          fail(`傳送失敗：${e?.code ? `[${e.code}] ` : ''}${e?.message || e}。請確認 LINE 開發者後台 LIFF 的 Scopes 有 chat_message.write、shareTargetPicker 已開啟。`);
+          $('copyRow').classList.remove('hidden');
         } finally {
           btns.forEach((b) => (b.disabled = false));
         }
