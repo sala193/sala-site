@@ -204,20 +204,37 @@ export function caseBubble(c: CardCase, o: BuildOpts) {
 
 export function agentBubble(o: BuildOpts) {
   const a = o.agent;
+  const c = { align: 'center' as const };
   return {
     type: 'bubble',
     size: SIZE,
-    hero: { type: 'image', url: a.headshot, size: 'full', aspectRatio: '1:1', aspectMode: 'cover' },
+    // 圓形頭像（臉完整）＋黃色弧，圖已先做好
+    hero: { type: 'image', url: `${o.origin}/images/sala-card-hero.jpg`, size: 'full', aspectRatio: '20:11', aspectMode: 'cover' },
     body: {
       type: 'box',
       layout: 'vertical',
       paddingAll: '14px',
       spacing: 'xs',
       contents: [
-        text(a.name, { weight: 'bold', size: 'xl', color: '#0f172a' }),
-        text(a.store, { size: 'sm', color: '#475569', wrap: true }),
-        text(a.phone, { weight: 'bold', size: 'xl', color: RED, margin: 'sm' }),
-        text(`${a.company}｜${a.broker}｜${a.agent}`, { size: 'xxs', color: '#94a3b8', wrap: true, margin: 'md' }),
+        ...(o.inlineGreeting ? [text(o.greeting, { size: 'sm', color: '#0f172a', wrap: true, weight: 'bold', ...c })] : []),
+        text('你好', { size: 'xs', color: '#64748b', ...c }),
+        {
+          type: 'text',
+          align: 'center',
+          wrap: true,
+          contents: [
+            { type: 'span', text: '我是 ', size: 'sm', color: '#475569' },
+            { type: 'span', text: '蔡莎拉', size: 'xxl', weight: 'bold', color: '#0f172a' },
+            { type: 'span', text: `（${a.name.replace(/^蔡/, '')}）`, size: 'xs', color: '#64748b' },
+          ],
+        },
+        text(a.phone, { weight: 'bold', size: 'xxl', color: RED, margin: 'sm', ...c }),
+        text('這是我挑選的合適物件', { size: 'sm', color: '#0f172a', margin: 'md', ...c }),
+        text('歡迎隨時連絡我，討論你的喜好', { size: 'sm', color: '#475569', wrap: true, ...c }),
+        text(`${a.store}
+${a.company}
+${a.broker}
+${a.agent}`, { size: 'xxs', color: '#94a3b8', wrap: true, margin: 'lg', ...c }),
       ],
     },
     footer: {
