@@ -108,7 +108,7 @@ function caseBubble(c: CardCase, o: BuildOpts) {
           spacing: 'sm',
           contents: [
             button('預約看屋', say(`預約看屋：${label}`), 'primary', '#06C755'),
-            button('打電話給莎拉', uri(`tel:${o.agent.tel}`), 'secondary'),
+            button('打電話給莎拉', uri(o.agent.lineUrl), 'secondary'), // 莎拉給的 LINE 連結（LINE 通話）
           ],
         },
         button('不喜歡', say(`這間不喜歡：${label}`), 'link'),
@@ -141,9 +141,9 @@ function agentBubble(o: BuildOpts) {
       spacing: 'sm',
       paddingAll: '12px',
       contents: [
-        button('撥打電話', uri(`tel:${a.tel}`), 'primary', '#0f172a'),
-        button('加 LINE 聊聊', uri(a.lineUrl), 'primary', '#06C755'),
-        button('看更多房子', uri(`${o.origin}/cases?s=${encodeURIComponent(o.code)}`), 'secondary'),
+        button('LINE 通話', uri(a.lineUrl), 'primary', '#06C755'),
+        button('預約看屋', say('莎拉您好！我想預約看屋，請問什麼時候方便？'), 'primary', '#ea580c'),
+        button('更多物件', uri(`${o.origin}/cases?s=${encodeURIComponent(o.code)}`), 'secondary'),
       ],
     },
   };
