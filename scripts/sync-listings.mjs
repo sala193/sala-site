@@ -100,7 +100,21 @@ async function fetchDetail(id) {
     seenKeys.add(key);
     images.push(src);
   }
-  return { images, detail: parseDetail(html) };
+  const detail = parseDetail(html);
+  // 720° VR：官網公開的 VR 介接網址（不用登入、不加密）。沒有 VR 的案件 stageInfo 是空的，就不放。
+  try {
+    const vr = await fetch(`https://buy.yungching.com.tw/api/v2/house/vr?id=${id}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36' }
+    });
+    if (vr.ok) {
+      const j = await vr.json();
+      const url = j?.data?.stageInfo?.iStagingUrl;
+      if (url && /^https:\/\//.test(url)) detail.vrUrl = url;
+    }
+  } catch {
+    /* VR 抓不到就不顯示，不影響其他資料 */
+  }
+  return { images, detail };
 }
 
 function extractMaxPage(html) {

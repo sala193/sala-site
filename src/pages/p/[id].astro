@@ -4,7 +4,8 @@
 // 資料來自永慶官網公開頁（listings.json），照片優先用我們的圖庫；官網沒寫的欄位就不顯示，不猜。
 import StoreLayout from '../../layouts/StoreLayout.astro';
 import Icon from '../../components/store/Icon.astro';
-import { AGENT, allCases, photosOf, priceParts, districtOf, titleOf, cleanFeature, caseNoShort } from '../../lib/store';
+import { AGENT, allCases, photosOf, priceParts, districtOf, titleOf, caseNoShort } from '../../lib/store';
+import { extractNotes, tagsFor } from '../../lib/notes';
 
 export function getStaticPaths() {
   return allCases().map((item) => ({ params: { id: item.id }, props: { item } }));
@@ -18,7 +19,8 @@ const address = item.address || '';
 const [priceNum, priceUnit] = priceParts(item.price);
 const unitPrice = d.unitPrice && /\d/.test(d.unitPrice) ? d.unitPrice : null; // 官網寫「請洽業務」就不顯示，不自己算
 const caseNo = caseNoShort(item.caseNo || d.caseNo);
-const features: string[] = (d.features || []).map(cleanFeature).filter(Boolean);
+const notes = extractNotes(d.features || []); // 莎拉筆記：官網特色說明逐句整理，不編造
+const tagList = tagsFor({ type: item.type, landPing: item.landPing, text: `${title} ${(d.features || []).join(' ')}` });
 const vrUrl: string | null = d.vrUrl || null;
 const pageTitle = `${title}｜${AGENT.brand} 心選好宅`;
 const desc = `${address} ${item.type || ''} ${item.rooms || ''} 總價 ${priceNum}${priceUnit}｜${AGENT.brand}為您服務`.replace(/\s+/g, ' ').trim();
@@ -172,6 +174,16 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
       )}
     </section>
 
+    {tagList.length > 0 && (
+      <section class="px-5 pb-4 -mt-1 border-b border-slate-100">
+        <div class="flex flex-wrap gap-1.5">
+          {tagList.map((t) => (
+            <span class="text-xs font-semibold bg-orange-50 text-orange-700 border border-orange-100 px-2.5 py-1 rounded-full">{t}</span>
+          ))}
+        </div>
+      </section>
+    )}
+
     <!-- 3. 四格核心特色卡 -->
     {specCards.length > 0 && (
       <section class="p-5 border-b border-slate-100 bg-slate-50/50">
@@ -187,15 +199,15 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
       </section>
     )}
 
-    <!-- 4. 房屋特色（官網特色說明） -->
-    {features.length > 0 && (
+    <!-- 4. 莎拉筆記・必看重點（官網特色說明逐句整理，文字照官網原文） -->
+    {notes.length > 0 && (
       <section class="p-5 border-b border-slate-100">
         <div class="flex items-center space-x-2 mb-4">
           <div class="w-1.5 h-5 bg-orange-500 rounded-full"></div>
-          <h2 class="text-base font-bold text-slate-900">房屋特色</h2>
+          <h2 class="text-base font-bold text-slate-900">莎拉筆記・必看重點</h2>
         </div>
         <div class="space-y-3">
-          {features.map((f, i) => (
+          {notes.map((f, i) => (
             <div class={`flex items-start space-x-3 p-3.5 rounded-xl border ${i === 0 ? 'bg-orange-50/60 border-orange-100/80' : 'bg-slate-50 border-slate-100'}`}>
               <div class={`w-6 h-6 rounded-full text-white flex items-center justify-center shrink-0 mt-0.5 ${i === 0 ? 'bg-orange-500' : 'bg-slate-800'}`}>
                 <Icon name="check" class="w-4 h-4" />
@@ -204,6 +216,7 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
             </div>
           ))}
         </div>
+        <p class="text-[11px] text-slate-400 mt-3">整理自永慶官網的特色說明，內容以官網與現場為準。</p>
       </section>
     )}
 
