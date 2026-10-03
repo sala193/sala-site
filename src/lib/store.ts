@@ -1,6 +1,7 @@
 // 蔡莎拉專屬店鋪：共用設定與小工具（單案頁 /p/<id> 與店鋪 /cases 共用）
 import listings from '../data/listings.json';
 import manifest from '../data/photo-manifest.json';
+import manifestSb from '../data/photo-manifest-sb.json';
 import overrides from '../data/overrides.json';
 import { cleanTitle } from './notes';
 
@@ -9,12 +10,17 @@ export { AGENT } from './agent';
 // 圖庫（Cloudflare R2）公開網址；每件照片路徑 cases/yc<官網id>/NN.webp
 export const PHOTO_BASE = 'https://pub-61c50068c9924c239dfb2d0e0ec9bbd2.r2.dev/cases';
 
+// 新案件的照片備份存在 Supabase Storage（每天早上雲端自動補），路徑 yc<官網id>/NN.jpg
+export const SB_PHOTO_BASE = 'https://dlfleszjcfeickibjcee.supabase.co/storage/v1/object/public/case-photos';
+
 type Item = (typeof listings)[number] & { detail?: Record<string, any> };
 
 /** 照片優先序（目前實作第 3 層：圖庫的官網備份；沒有備份就直接用官網網址） */
 export function photosOf(item: Item): string[] {
   const n = (manifest as Record<string, number>)[item.id] || 0;
   if (n > 0) return Array.from({ length: n }, (_, i) => `${PHOTO_BASE}/yc${item.id}/${String(i + 1).padStart(2, '0')}.webp`);
+  const m = (manifestSb as Record<string, number>)[item.id] || 0;
+  if (m > 0) return Array.from({ length: m }, (_, i) => `${SB_PHOTO_BASE}/yc${item.id}/${String(i + 1).padStart(2, '0')}.jpg`);
   return item.images?.length ? item.images : item.image ? [item.image] : [];
 }
 
