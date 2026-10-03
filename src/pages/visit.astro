@@ -1,0 +1,139 @@
+---
+// 看屋確認頁：客人從「看屋提醒」卡片點進來（網址帶一組很長的暗號 t，只有那位客人知道）。
+// 客人勾選「這次要看哪幾間」→ 按「我會準時到」；或按「要改時間」留言。結果會即時通知莎拉（Discord）並記進後台。
+// 不給搜尋引擎。頁面只讀公開資料：看屋時間、地點、官網案號（案名與照片取自公開的 /cases.json）。
+import StoreLayout from '../layouts/StoreLayout.astro';
+---
+<StoreLayout title="看屋確認｜蔡莎拉" description="確認看屋時間與要看的房子" path="/visit">
+  <meta slot="head" name="robots" content="noindex,nofollow" />
+
+  <main class="max-w-md mx-auto min-h-screen bg-white p-5" id="app">
+    <h1 class="text-lg font-black text-slate-900">看屋確認</h1>
+    <p id="status" class="text-sm text-slate-500 mt-2">讀取中…</p>
+
+    <div id="box" class="hidden mt-3">
+      <p id="greet" class="text-sm text-slate-600"></p>
+      <div class="mt-3 rounded-2xl bg-orange-50 border border-orange-200 p-4">
+        <p class="text-xs text-orange-700 font-semibold">看屋時間</p>
+        <p id="when" class="text-2xl font-black text-slate-900 mt-1"></p>
+        <p id="place" class="text-sm text-slate-700 mt-2 hidden"></p>
+        <a id="map" href="#" target="_blank" rel="noopener" class="hidden mt-3 inline-block h-10 leading-10 px-4 rounded-xl bg-white border border-slate-300 text-sm font-bold text-slate-800">地點導航</a>
+      </div>
+
+      <p class="text-sm font-bold text-slate-900 mt-5">請勾選這次要看的房子</p>
+      <ul id="list" class="mt-2 space-y-2"></ul>
+      <p id="count" class="text-xs text-slate-500 mt-2"></p>
+
+      <button id="okBtn" type="button" class="mt-5 w-full h-12 rounded-xl bg-emerald-600 active:scale-95 text-white font-bold transition-transform disabled:opacity-50">我會準時到</button>
+      <button id="chgToggle" type="button" class="mt-3 w-full h-11 rounded-xl bg-white border border-slate-300 text-slate-700 font-bold">我需要改時間</button>
+      <div id="chgBox" class="hidden mt-3">
+        <textarea id="msg" rows="3" maxlength="200" placeholder="例如：可以改到下午 3 點嗎？" class="w-full rounded-xl border border-slate-300 p-3 text-sm"></textarea>
+        <button id="chgBtn" type="button" class="mt-2 w-full h-11 rounded-xl bg-orange-500 active:scale-95 text-white font-bold disabled:opacity-50">送出，請莎拉聯絡我</button>
+      </div>
+      <p id="err" class="hidden mt-3 text-sm font-semibold text-rose-600"></p>
+    </div>
+
+    <div id="done" class="hidden mt-6 rounded-2xl bg-emerald-50 border border-emerald-200 p-5 text-center">
+      <p id="doneTitle" class="text-lg font-black text-emerald-700"></p>
+      <p id="doneText" class="text-sm text-slate-700 mt-2"></p>
+    </div>
+    <p class="mt-8 text-[11px] text-slate-400">蔡莎拉｜永慶不動產　手機 0986-793-193</p>
+  </main>
+
+  <script>
+    const BASE = 'https://dlfleszjcfeickibjcee.supabase.co/rest/v1/rpc';
+    const KEY = 'sb_publishable_TFAFZE-d5n0ElisMATr9rw_ku8be1xT'; // 公開的 publishable key
+    const $ = (id: string) => document.getElementById(id)!;
+    const t = (new URLSearchParams(location.search).get('t') || '').replace(/[^a-z0-9]/gi, '');
+
+    async function rpc(fn: string, body: unknown) {
+      const res = await fetch(`${BASE}/${fn}`, {
+        method: 'POST',
+        headers: { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json();
+    }
+    const fail = (m: string) => { $('status').textContent = m; $('status').className = 'text-sm text-rose-600 mt-2 font-semibold'; };
+    const showErr = (m: string) => { $('err').textContent = m; $('err').classList.remove('hidden'); };
+    const whenText = (iso: string) => {
+      const d = new Date(iso);
+      return d.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false });
+    };
+    function finish(title: string, text: string) {
+      $('box').classList.add('hidden');
+      $('status').classList.add('hidden');
+      $('doneTitle').textContent = title;
+      $('doneText').textContent = text;
+      $('done').classList.remove('hidden');
+    }
+
+    async function main() {
+      if (t.length < 10) return fail('網址不完整，請回到 LINE 重新點一次提醒卡片。');
+      const a = await rpc('visit_get', { t });
+      if (!a) return fail('找不到這筆預約，請聯絡莎拉：0986-793-193');
+      const all = await (await fetch('/cases.json', { cache: 'no-store' })).json();
+      const sel = new Set<string>(a.selected || []);
+
+      $('greet').textContent = `${a.greeting}，請確認看屋時間，並勾選要看的房子。`;
+      $('when').textContent = whenText(a.when);
+      if (a.place) { $('place').textContent = `集合地點：${a.place}`; $('place').classList.remove('hidden'); }
+      if (a.map && /^https:\/\//.test(a.map)) { ($('map') as HTMLAnchorElement).href = a.map; $('map').classList.remove('hidden'); }
+
+      const list = $('list');
+      for (const id of a.houses as string[]) {
+        const c = all.find((x: any) => x.id === id);
+        const li = document.createElement('li');
+        const label = document.createElement('label');
+        label.className = 'flex gap-3 items-center rounded-xl border border-slate-200 p-2 cursor-pointer';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.value = id; cb.checked = sel.has(id); cb.className = 'w-6 h-6 shrink-0 accent-emerald-600';
+        cb.addEventListener('change', update);
+        label.append(cb);
+        if (c) {
+          const img = document.createElement('img');
+          img.src = c.cover; img.alt = ''; img.className = 'w-16 h-12 rounded-lg object-cover bg-slate-100 shrink-0';
+          label.append(img);
+        }
+        const txt = document.createElement('div');
+        txt.className = 'text-sm min-w-0';
+        const n = document.createElement('div'); n.className = 'font-bold text-slate-900'; n.textContent = c ? c.title : `官網案號 ${id}`;
+        const p = document.createElement('div'); p.className = 'text-rose-600 font-bold'; p.textContent = c ? c.priceText : '';
+        txt.append(n, p);
+        label.append(txt);
+        li.append(label);
+        list.append(li);
+      }
+      function update() {
+        const n = (list.querySelectorAll('input:checked') as NodeListOf<HTMLInputElement>).length;
+        $('count').textContent = n ? `已勾選 ${n} 間` : '還沒勾選，請至少勾一間。';
+      }
+      update();
+
+      $('status').classList.add('hidden');
+      $('box').classList.remove('hidden');
+      if (a.status === 'confirmed') $('status').classList.add('hidden');
+
+      const picked = () => [...(list.querySelectorAll('input:checked') as NodeListOf<HTMLInputElement>)].map((x) => x.value);
+      async function send(act: string, msg: string, btn: HTMLButtonElement) {
+        $('err').classList.add('hidden');
+        btn.disabled = true;
+        try {
+          const r = await rpc('visit_respond', { t, act, selected: picked(), msg });
+          if (!r.ok) { showErr(r.error || '送出失敗，請再試一次。'); return; }
+          if (act === 'confirm') finish('收到了，到時候見！', `已通知莎拉：您會準時到，要看 ${picked().length} 間。路上小心，有任何狀況請撥 0986-793-193。`);
+          else finish('已通知莎拉', '莎拉會盡快與您聯絡，重新約時間。');
+        } catch { showErr('網路不穩，沒有送出，請再按一次。'); }
+        finally { btn.disabled = false; }
+      }
+      $('okBtn').addEventListener('click', () => send('confirm', '', $('okBtn') as HTMLButtonElement));
+      $('chgToggle').addEventListener('click', () => $('chgBox').classList.toggle('hidden'));
+      $('chgBtn').addEventListener('click', () => send('change', ($('msg') as HTMLTextAreaElement).value, $('chgBtn') as HTMLButtonElement));
+      if (a.status === 'confirmed') {
+        $('count').textContent += '（您已回覆過，可以重新勾選後再按一次來更新）';
+      }
+    }
+    main().catch(() => fail('讀取失敗，請稍後再試，或聯絡莎拉：0986-793-193'));
+  </script>
+</StoreLayout>
