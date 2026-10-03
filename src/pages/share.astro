@@ -60,7 +60,7 @@ import { LIFF_ID } from '../lib/agent';
       const ver = Number(p.get('v') || 0);
       const cases = ids.map((id) => all.find((c: any) => c.id === id)).filter(Boolean)
         .map((c: any) => (ver >= 1 && ver <= 3 && c.variants?.[ver - 1] ? { ...c, note: c.variants[ver - 1] } : c));
-      if (!cases.length) return fail('找不到這些案件，可能官網已經下架了。');
+      if (!cases.length) return fail('找不到這些案件，可能永慶官網已經下架了。');
       const missing = ids.length - cases.length;
 
       const origin = location.origin;
