@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 /**
  * sync-listings.mjs
  * ------------------------------------------------------------
@@ -295,6 +296,15 @@ async function syncStore(store) {
 }
 
 async function main() {
+  // 上一次存的清單：官網詳情頁抓不到（例如被擋）時，沿用舊的詳情與相簿，不要把它洗成空的
+  let previous = new Map();
+  try {
+    const old = JSON.parse(readFileSync(new URL('../src/data/listings.json', import.meta.url), 'utf-8'));
+    const arr = Array.isArray(old) ? old : old.items || old.listings || [];
+    previous = new Map(arr.map((x) => [x.id, x]));
+  } catch {
+    /* 沒有舊檔也沒關係 */
+  }
   let all = [];
   const debugPages = {};
 
@@ -317,7 +327,9 @@ async function main() {
     const item = listings[i];
     try {
       const { images, detail } = await fetchDetail(item.id);
-      item.detail = detail; // 單案銷售頁 /p/<id> 用的詳情欄位
+      const prev = previous.get(item.id);
+      const empty = !detail || (!detail.title && !(detail.features || []).length);
+      item.detail = empty && prev?.detail ? prev.detail : detail; // 單案銷售頁 /p/<id> 用的詳情欄位（抓不到就沿用舊的）
       if (images.length) {
         // 詳情頁相簿的第一張不一定是外觀封面照(有些物件第一張是格局圖)。
         // 列表頁縮圖(item.image)才是永慶官網自己選定的封面照,
@@ -331,11 +343,14 @@ async function main() {
         item.images = images;
         item.image = images[0];
       } else {
-        item.images = item.image ? [item.image] : [];
+        item.images = prev?.images?.length ? prev.images : item.image ? [item.image] : [];
+        if (prev?.images?.length) item.image = prev.images[0];
       }
     } catch (err) {
       console.warn(`  第 ${i + 1}/${listings.length} 筆(${item.id})相簿抓取失敗:${err.message}`);
-      item.images = item.image ? [item.image] : [];
+      const prev = previous.get(item.id);
+      if (prev?.detail) item.detail = prev.detail;
+      item.images = prev?.images?.length ? prev.images : item.image ? [item.image] : [];
     }
     if ((i + 1) % 20 === 0 || i === listings.length - 1) {
       console.log(`  已完成 ${i + 1}/${listings.length}`);
