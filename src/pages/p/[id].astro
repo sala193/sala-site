@@ -113,6 +113,7 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
                 <div class="swiper-slide cursor-pointer" data-index={i}>
                   <div class="aspect-[4/3] w-full bg-slate-100 overflow-hidden relative">
                     <img src={src} alt={`${title} 第 ${i + 1} 張`} class="w-full h-full object-cover" loading={i < 2 ? 'eager' : 'lazy'} decoding="async" />
+                    <img src="/images/brand/sala-watermark.png" alt="" class="photo-wm absolute bottom-11 right-3 w-14 pointer-events-none select-none" />
                     <div class="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-xs font-medium px-2.5 py-1 rounded-full">
                       {i + 1} / {photos.length}
                     </div>
@@ -394,6 +395,7 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
     <button id="lbClose" type="button" class="absolute top-3 right-3 z-10 text-white bg-white/15 rounded-full p-2" aria-label="關閉">
       <Icon name="x" class="w-6 h-6" />
     </button>
+    <img src="/images/brand/sala-watermark.png" alt="" class="photo-wm absolute bottom-4 left-4 z-10 w-16 pointer-events-none select-none" />
     <div class="swiper lbSwiper h-full">
       <div class="swiper-wrapper">
         {photos.map((src) => (
@@ -508,3 +510,11 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
     })();
   </script>
 </StoreLayout>
+
+<style is:global>
+  /* 照片浮水印（做法 A：網頁疊上去）：灰色 logo 轉成白色，加陰影，任何照片都看得清楚 */
+  .photo-wm {
+    opacity: 0.85;
+    filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.7));
+  }
+</style>
