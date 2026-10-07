@@ -32,17 +32,14 @@ const unitPrice = d.unitPrice && /\d/.test(d.unitPrice) ? d.unitPrice : null; //
 const caseNo = caseNoShort(item.caseNo || d.caseNo);
 // 莎拉筆記：有定稿的用定稿，沒有就由官網特色整理
 const finalNotes = (notesData as Record<string, { title: string; text: string }[]>)[item.id];
-// 存檔頁不放價格：官網文字裡有「○○萬」的句子整句拿掉（成交價只有莎拉在後台看得到）
-const PRICE_RE = /[\d,.]+\s*萬/;
-const scrub = (t: string | null | undefined): string => (!t ? "" : archived ? t.split(/(?<=[；。;])/).filter((seg) => !PRICE_RE.test(seg)).join('').trim() : t);
 const notesRaw = finalNotes && finalNotes.length ? finalNotes : buildModules(d.features || [], { landPing: item.landPing, type: item.type });
-const notes = archived ? notesRaw.map((m: { title: string; text: string }) => ({ title: scrub(m.title), text: scrub(m.text) })).filter((m: { title: string; text: string }) => m.title && m.text) : notesRaw; // 莎拉筆記：官網特色說明歸納成重點卡，不編造
+const notes = notesRaw; // 莎拉筆記：官網特色說明歸納成重點卡，不編造
 const tagList = tagsFor({ type: item.type, landPing: item.landPing, text: `${title} ${[...picked(item.id), ...(d.features || [])].join(' ')}` });
-const autoSummary = buildSummary([...picked(item.id), ...(d.features || [])], { title, price: archived ? null : item.price, floorText: d.floorText, layout: d.layout, community: d.community, age: item.age, type: item.type, ping: item.buildingPing || item.landPing, usage: d.usage }); // 物件特色：官網原句挑 3～4 個事實
+const autoSummary = buildSummary([...picked(item.id), ...(d.features || [])], { title, price: item.price, floorText: d.floorText, layout: d.layout, community: d.community, age: item.age, type: item.type, ping: item.buildingPing || item.landPing, usage: d.usage }); // 物件特色：官網原句挑 3～4 個事實
 // 莎拉定稿的金句優先；沒有定稿就用自動產生的
 const cp = (copy as Record<string, { v: string[]; p: number }>)[item.id];
 const finalSummary = cp && cp.v.every((x: string) => x) ? cp.v[Math.min(Math.max(cp.p, 1), 3) - 1] : null;
-const summary = scrub(finalSummary || autoSummary);
+const summary = finalSummary || autoSummary;
 const vrUrl: string | null = d.vrUrl || null;
 const pageTitle = `${title}｜${AGENT.brand} 心選好宅`;
 const desc = (archived ? `${address} ${item.type || ''} ${item.rooms || ''} ${archiveText}｜${AGENT.brand}為您服務` : `${address} ${item.type || ''} ${item.rooms || ''} 總價 ${priceNum}${priceUnit}｜${AGENT.brand}為您服務`).replace(/\s+/g, ' ').trim();
@@ -179,20 +176,20 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
     <!-- 2. 價格與標題 -->
     <section class="p-5 border-b border-slate-100">
       <div class="flex items-baseline justify-between mb-2">
-        {archived ? (
-          <div class="flex items-baseline space-x-1.5">
-            <span id="archivePrice" class="text-3xl font-black text-rose-600 tracking-tight">{archiveText}</span>
-          </div>
-        ) : (
-        <div class="flex items-baseline space-x-1.5">
+        <div class="relative flex items-baseline space-x-1.5">
           {item.originalPrice && item.price && item.originalPrice > item.price && (
             <span class="text-sm text-slate-400 line-through mr-1">{item.originalPrice.toLocaleString('en-US')}</span>
           )}
           <span class="text-3xl font-black text-rose-600 tracking-tight">{priceNum}</span>
           <span class="text-base font-extrabold text-rose-600">{priceUnit}</span>
           {unitPrice && <span class="text-xs font-medium text-slate-400 ml-1.5">({unitPrice})</span>}
+          {archived && (
+            <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+              <line x1="2" y1="2" x2="98" y2="38" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+              <line x1="98" y1="2" x2="2" y2="38" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+            </svg>
+          )}
         </div>
-        )}
         {caseNo && (
           <span class="text-xs font-mono font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded">案號 #{caseNo}</span>
         )}
@@ -553,7 +550,6 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
           if (!st) return;
           const label = st === '已成交' ? '已成交' : '已下架';
           const stamp = document.getElementById('archiveStamp'); if (stamp) stamp.textContent = label;
-          const price = document.getElementById('archivePrice'); if (price) price.textContent = label;
         } catch (e) { /* 查不到就維持原字樣 */ }
       })();
     </script>
