@@ -2,8 +2,8 @@
 // 店鋪頁共用外框（/cases、/p/<id>）：Tailwind 樣式、字型、分享預覽（Open Graph）
 import '../styles/store.css';
 
-interface Props { title: string; description: string; image?: string; path: string; }
-const { title, description, image, path } = Astro.props;
+interface Props { title: string; description: string; image?: string; path: string; noindex?: boolean; }
+const { title, description, image, path, noindex } = Astro.props;
 const url = new URL(path, Astro.site);
 ---
 <!doctype html>
@@ -13,6 +13,7 @@ const url = new URL(path, Astro.site);
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="canonical" href={url} />
     <link rel="icon" href="/images/brand/favicon.png" />
     <meta property="og:title" content={title} />

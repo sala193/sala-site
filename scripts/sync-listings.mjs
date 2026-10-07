@@ -362,6 +362,30 @@ async function main() {
   await writeFile(OUTPUT_PATH, JSON.stringify(listings, null, 2), 'utf-8');
   console.log(`\n完成:共寫入 ${listings.length} 筆物件到 ${OUTPUT_PATH}`);
 
+  // 銷售頁存檔：官網撤下的案件（上一次有、這次沒有）把凍結內容收進 archive.json，永不刪除；
+  // 之後又回到官網的就從存檔拿掉。整批抓取失敗（一間店都沒抓到）時不動存檔，避免誤封存。
+  try {
+    const archiveUrl = new URL('../src/data/archive.json', import.meta.url);
+    let archive = {};
+    try {
+      archive = JSON.parse(readFileSync(archiveUrl, 'utf-8'));
+    } catch {
+      /* 還沒有存檔檔也沒關係 */
+    }
+    if (listings.length > 0) {
+      const nowIds = new Set(listings.map((x) => x.id));
+      const today = new Date().toISOString().slice(0, 10);
+      for (const [id, item] of previous) {
+        if (!nowIds.has(id) && !archive[id]) archive[id] = { ...item, archivedAt: today };
+      }
+      for (const id of Object.keys(archive)) if (nowIds.has(id)) delete archive[id];
+      await writeFile(archiveUrl, JSON.stringify(archive, null, 1) + '\n', 'utf-8');
+      console.log(`銷售頁存檔：共 ${Object.keys(archive).length} 件`);
+    }
+  } catch (e) {
+    console.warn('更新銷售頁存檔失敗（不影響清單）：', e.message);
+  }
+
   // 如果解析結果看起來異常(例如名稱大量是 null),額外存原始頁面方便除錯
   const brokenCount = listings.filter((l) => !l.name || !l.price).length;
   if (brokenCount > listings.length * 0.3) {

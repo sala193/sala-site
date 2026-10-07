@@ -26,3 +26,4 @@ await grab('store_appeal_features', 'appeal.json', '特色亮點');
 await grab('store_copy_all', 'copy.json', '定稿物件特色');
 await grab('store_notes_all', 'notes.json', '定稿莎拉筆記');
 await grab('store_photo_manifest', 'photo-manifest-sb.json', '雲端新增的照片備份');
+await grab('store_archive_status', 'archive-status.json', '銷售頁存檔狀態');

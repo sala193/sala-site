@@ -4,7 +4,7 @@
 // 資料來自永慶官網公開頁（listings.json），照片優先用我們的圖庫；官網沒寫的欄位就不顯示，不猜。
 import StoreLayout from '../../layouts/StoreLayout.astro';
 import Icon from '../../components/store/Icon.astro';
-import { AGENT, allCases, photosOf, priceParts, districtOf, titleOf, caseNoShort } from '../../lib/store';
+import { AGENT, allCases, archivedCases, archiveLabel, photosOf, priceParts, districtOf, titleOf, caseNoShort } from '../../lib/store';
 import { SHARE_EVENT_URL } from '../../lib/agent';
 import { buildModules, buildSummary, tagsFor } from '../../lib/notes';
 import appeal from '../../data/appeal.json';
@@ -12,11 +12,17 @@ import copy from '../../data/copy.json';
 import notesData from '../../data/notes.json';
 
 export function getStaticPaths() {
-  return allCases().map((item) => ({ params: { id: item.id }, props: { item } }));
+  // 銷售中的 + 銷售頁存檔（官網已撤下，只給莎拉手動分享；不進店鋪清單、不進搜尋引擎）
+  return [
+    ...allCases().map((item) => ({ params: { id: item.id }, props: { item, archived: false } })),
+    ...archivedCases().map((item) => ({ params: { id: item.id }, props: { item, archived: true } })),
+  ];
 }
 
 const picked = (id: string): string[] => ((appeal as Record<string, string[]>)[id] || []).map((t) => `${t}，`);
-const { item } = Astro.props as { item: ReturnType<typeof allCases>[number] };
+const { item, archived } = Astro.props as { item: ReturnType<typeof allCases>[number]; archived: boolean };
+// 存檔頁：只寫「已成交」或「已下架」，不放價格（成交價只有莎拉在後台看得到）
+const archiveText = archived ? archiveLabel(item.id) : '';
 const d = (item as any).detail || {};
 const photos = photosOf(item);
 const title = titleOf(item);
@@ -26,23 +32,27 @@ const unitPrice = d.unitPrice && /\d/.test(d.unitPrice) ? d.unitPrice : null; //
 const caseNo = caseNoShort(item.caseNo || d.caseNo);
 // 莎拉筆記：有定稿的用定稿，沒有就由官網特色整理
 const finalNotes = (notesData as Record<string, { title: string; text: string }[]>)[item.id];
-const notes = finalNotes && finalNotes.length ? finalNotes : buildModules(d.features || [], { landPing: item.landPing, type: item.type }); // 莎拉筆記：官網特色說明歸納成重點卡，不編造
+// 存檔頁不放價格：官網文字裡有「○○萬」的句子整句拿掉（成交價只有莎拉在後台看得到）
+const PRICE_RE = /[\d,.]+\s*萬/;
+const scrub = (t: string | null | undefined): string => (!t ? "" : archived ? t.split(/(?<=[；。;])/).filter((seg) => !PRICE_RE.test(seg)).join('').trim() : t);
+const notesRaw = finalNotes && finalNotes.length ? finalNotes : buildModules(d.features || [], { landPing: item.landPing, type: item.type });
+const notes = archived ? notesRaw.map((m: { title: string; text: string }) => ({ title: scrub(m.title), text: scrub(m.text) })).filter((m: { title: string; text: string }) => m.title && m.text) : notesRaw; // 莎拉筆記：官網特色說明歸納成重點卡，不編造
 const tagList = tagsFor({ type: item.type, landPing: item.landPing, text: `${title} ${[...picked(item.id), ...(d.features || [])].join(' ')}` });
-const autoSummary = buildSummary([...picked(item.id), ...(d.features || [])], { title, price: item.price, floorText: d.floorText, layout: d.layout, community: d.community, age: item.age, type: item.type, ping: item.buildingPing || item.landPing, usage: d.usage }); // 物件特色：官網原句挑 3～4 個事實
+const autoSummary = buildSummary([...picked(item.id), ...(d.features || [])], { title, price: archived ? null : item.price, floorText: d.floorText, layout: d.layout, community: d.community, age: item.age, type: item.type, ping: item.buildingPing || item.landPing, usage: d.usage }); // 物件特色：官網原句挑 3～4 個事實
 // 莎拉定稿的金句優先；沒有定稿就用自動產生的
 const cp = (copy as Record<string, { v: string[]; p: number }>)[item.id];
 const finalSummary = cp && cp.v.every((x: string) => x) ? cp.v[Math.min(Math.max(cp.p, 1), 3) - 1] : null;
-const summary = finalSummary || autoSummary;
+const summary = scrub(finalSummary || autoSummary);
 const vrUrl: string | null = d.vrUrl || null;
 const pageTitle = `${title}｜${AGENT.brand} 心選好宅`;
-const desc = `${address} ${item.type || ''} ${item.rooms || ''} 總價 ${priceNum}${priceUnit}｜${AGENT.brand}為您服務`.replace(/\s+/g, ' ').trim();
+const desc = (archived ? `${address} ${item.type || ''} ${item.rooms || ''} ${archiveText}｜${AGENT.brand}為您服務` : `${address} ${item.type || ''} ${item.rooms || ''} 總價 ${priceNum}${priceUnit}｜${AGENT.brand}為您服務`).replace(/\s+/g, ' ').trim();
 
 // 左上角標籤：只放有根據的（降價、新上架、類型）
 const tags: { text: string; cls: string }[] = [];
-if (item.originalPrice && item.price && item.originalPrice > item.price) {
+if (!archived && item.originalPrice && item.price && item.originalPrice > item.price) {
   tags.push({ text: `🔥 降價 ${(item.originalPrice - item.price).toLocaleString('en-US')} 萬`, cls: 'bg-rose-600/95 text-white' });
 }
-if (item.isNew) tags.push({ text: '✨ 新上架', cls: 'bg-rose-600/95 text-white' });
+if (!archived && item.isNew) tags.push({ text: '✨ 新上架', cls: 'bg-rose-600/95 text-white' });
 if (item.type) tags.push({ text: `⚡ ${item.type}`, cls: 'bg-slate-900/80 text-amber-300' });
 
 // 四格核心卡：從有資料的欄位裡依序挑 4 個
@@ -76,7 +86,7 @@ const rows: [string, string][] = [
 
 const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit' }).replace(/\D+/g, '/').replace(/\/$/, '');
 ---
-<StoreLayout title={pageTitle} description={desc} image={photos[0]} path={`/p/${item.id}`}>
+<StoreLayout title={pageTitle} description={desc} image={photos[0]} path={`/p/${item.id}`} noindex={archived}>
   <div id="pp" data-title={title} data-caseno={caseNo} data-line-id={AGENT.lineId} data-house={item.id} data-event-url={SHARE_EVENT_URL} class="hidden"></div>
   <div id="toast" class="hidden fixed left-1/2 -translate-x-1/2 top-20 z-[80] bg-slate-900/90 text-white text-sm px-4 py-2.5 rounded-full shadow-lg"></div>
 
@@ -101,6 +111,12 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
     </div>
   </header>
 
+  {archived && (
+    <div id="archiveBar" data-house={item.id} data-label={archiveText} class="max-w-md mx-auto bg-slate-900 text-white text-center text-sm font-bold py-2.5 px-4">
+      <span id="archiveBarText">{archiveText === '已成交' ? '此物件已成交（銷售頁存檔）' : '此物件已下架（銷售頁存檔）'}</span>
+    </div>
+  )}
+
   <main class="max-w-md mx-auto bg-white min-h-screen shadow-sm border-x border-slate-100">
 
     <!-- 1. 大圖輪播 -->
@@ -124,6 +140,12 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
             <div class="swiper-button-next"></div>
             <div class="swiper-button-prev"></div>
           </div>
+
+          {archived && (
+            <div class="absolute inset-x-0 top-[22%] z-10 flex justify-center pointer-events-none select-none">
+              <span id="archiveStamp" class="-rotate-12 border-4 border-rose-600 text-rose-600 bg-white/85 rounded-xl px-6 py-1.5 text-5xl font-black tracking-widest shadow-lg">{archiveText}</span>
+            </div>
+          )}
 
           <div class="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5 pointer-events-none">
             {tags.map((t) => (
@@ -162,6 +184,11 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
     <!-- 2. 價格與標題 -->
     <section class="p-5 border-b border-slate-100">
       <div class="flex items-baseline justify-between mb-2">
+        {archived ? (
+          <div class="flex items-baseline space-x-1.5">
+            <span id="archivePrice" class="text-3xl font-black text-rose-600 tracking-tight">{archiveText}</span>
+          </div>
+        ) : (
         <div class="flex items-baseline space-x-1.5">
           {item.originalPrice && item.price && item.originalPrice > item.price && (
             <span class="text-sm text-slate-400 line-through mr-1">{item.originalPrice.toLocaleString('en-US')}</span>
@@ -170,6 +197,7 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
           <span class="text-base font-extrabold text-rose-600">{priceUnit}</span>
           {unitPrice && <span class="text-xs font-medium text-slate-400 ml-1.5">({unitPrice})</span>}
         </div>
+        )}
         {caseNo && (
           <span class="text-xs font-mono font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded">案號 #{caseNo}</span>
         )}
@@ -324,7 +352,7 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
 
     <!-- 頁尾 + 法規揭露 -->
     <footer class="p-6 text-center text-xs text-slate-400 space-y-1">
-      {caseNo && <div>物件編號：{caseNo}｜資料更新時間：{updated}</div>}
+      {caseNo && <div>物件編號：{caseNo}｜{archived ? `存檔日期：${(item as any).archivedAt || ''}` : `資料更新時間：${updated}`}</div>}
       <div>{AGENT.company}｜{AGENT.store}</div>
       <div>{AGENT.broker}</div>
       <div>{AGENT.agent}</div>
@@ -347,10 +375,17 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
         <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 5.96 2 10.84c0 3.12 1.83 5.86 4.64 7.37-.2.74-.74 2.68-.85 3.09-.13.5.18.49.38.36.16-.1 2.22-1.5 3.12-2.12.87.16 1.78.24 2.71.24 5.52 0 10-3.96 10-8.84S17.52 2 12 2zm-3.8 11.5H6.38a.68.68 0 01-.68-.68V8.68c0-.38.3-.68.68-.68.38 0 .68.3.68.68v3.45H8.2c.38 0 .68.3.68.68 0 .39-.3.69-.68.69zm2.44 0a.68.68 0 01-.68-.68V8.68c0-.38.3-.68.68-.68.38 0 .68.3.68.68v4.14a.68.68 0 01-.68.68zm5.18 0h-1.82a.68.68 0 01-.68-.68V8.68c0-.38.3-.68.68-.68.38 0 .68.3.68.68v3.45h1.14c.38 0 .68.3.68.68 0 .39-.3.69-.68.69zm-2.09-4.82a.68.68 0 01.68.68v2.78l-1.92-2.9a.67.67 0 00-.56-.33.68.68 0 00-.68.68v4.14a.68.68 0 001.36 0V11.4l1.92 2.9c.14.21.37.33.62.33.38 0 .68-.3.68-.68V8.68a.68.68 0 00-.68-.68z"/></svg>
         <span class="text-sm">加 LINE 聊這間</span>
       </a>
+      {archived ? (
+        <a href="/cases" class="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 active:scale-95 text-white font-bold h-12 rounded-xl flex items-center justify-center space-x-1 shadow-sm transition-transform">
+          <Icon name="sparkles" class="w-4 h-4" />
+          <span class="text-sm">看類似物件</span>
+        </a>
+      ) : (
       <button id="bookOpen" type="button" class="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 active:scale-95 text-white font-bold h-12 rounded-xl flex items-center justify-center space-x-1 shadow-sm transition-transform">
         <Icon name="calendar" class="w-4 h-4" />
         <span class="text-sm">預約帶看</span>
       </button>
+      )}
     </div>
   </div>
 
@@ -509,6 +544,26 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
       if (act) { q.delete('act'); history.replaceState(null, '', `${location.pathname}${q.toString() ? '?' + q.toString() : ''}`); }
     })();
   </script>
+  {archived && (
+    <script is:inline define:vars={{ hid: item.id }}>
+      // 存檔頁的字樣以後台當下狀態為準（只有「已成交」寫已成交，其餘寫已下架）；查不到就維持建置時的字樣
+      (async () => {
+        try {
+          const KEY = 'sb_publishable_TFAFZE-d5n0ElisMATr9rw_ku8be1xT';
+          const res = await fetch('https://dlfleszjcfeickibjcee.supabase.co/rest/v1/rpc/store_archive_status', {
+            method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: '{}',
+          });
+          if (!res.ok) return;
+          const st = (await res.json())[hid];
+          if (!st) return;
+          const label = st === '已成交' ? '已成交' : '已下架';
+          const stamp = document.getElementById('archiveStamp'); if (stamp) stamp.textContent = label;
+          const price = document.getElementById('archivePrice'); if (price) price.textContent = label;
+          const bar = document.getElementById('archiveBarText'); if (bar) bar.textContent = '此物件' + label + '（銷售頁存檔）';
+        } catch (e) { /* 查不到就維持原字樣 */ }
+      })();
+    </script>
+  )}
 </StoreLayout>
 
 <style is:global>

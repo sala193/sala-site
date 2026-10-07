@@ -3,6 +3,8 @@ import listings from '../data/listings.json';
 import manifest from '../data/photo-manifest.json';
 import manifestSb from '../data/photo-manifest-sb.json';
 import overrides from '../data/overrides.json';
+import archive from '../data/archive.json';
+import archiveStatus from '../data/archive-status.json';
 import { cleanTitle } from './notes';
 
 export { AGENT } from './agent';
@@ -22,6 +24,17 @@ export function photosOf(item: Item): string[] {
   const m = (manifestSb as Record<string, number>)[item.id] || 0;
   if (m > 0) return Array.from({ length: m }, (_, i) => `${SB_PHOTO_BASE}/yc${item.id}/${String(i + 1).padStart(2, '0')}.jpg`);
   return item.images?.length ? item.images : item.image ? [item.image] : [];
+}
+
+/** 銷售頁存檔：官網已撤下、但我們留著凍結內容的案件（只給莎拉手動分享，不進店鋪清單、不進搜尋引擎） */
+export function archivedCases(): Item[] {
+  const live = new Set((listings as Item[]).map((it) => it.id));
+  return Object.values(archive as Record<string, Item>).filter((it) => !live.has(it.id));
+}
+
+/** 存檔頁寫「已成交」還是「已下架」：只有後台標「已成交」才寫已成交（每天同步，頁面上也會即時再查一次） */
+export function archiveLabel(id: string): '已成交' | '已下架' {
+  return (archiveStatus as Record<string, string>)[id] === '已成交' ? '已成交' : '已下架';
 }
 
 /** 全部案件（同一個官網 id 只留一筆） */
