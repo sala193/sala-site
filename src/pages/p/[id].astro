@@ -190,6 +190,9 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
             </svg>
           )}
         </div>
+        {archived && (
+          <span id="archivePrice" class="-rotate-6 border-[3px] border-rose-600 text-rose-600 rounded-lg px-3 py-0.5 text-2xl font-black tracking-widest select-none">{archiveText}</span>
+        )}
         {caseNo && (
           <span class="text-xs font-mono font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded">案號 #{caseNo}</span>
         )}
@@ -550,6 +553,7 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
           if (!st) return;
           const label = st === '已成交' ? '已成交' : '已下架';
           const stamp = document.getElementById('archiveStamp'); if (stamp) stamp.textContent = label;
+          const price = document.getElementById('archivePrice'); if (price) price.textContent = label;
         } catch (e) { /* 查不到就維持原字樣 */ }
       })();
     </script>
