@@ -539,6 +539,28 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
       if (act) { q.delete('act'); history.replaceState(null, '', `${location.pathname}${q.toString() ? '?' + q.toString() : ''}`); }
     })();
   </script>
+  {!archived && (
+    <script is:inline define:vars={{ hid: item.id }}>
+      // 後台已標「已成交」（莎拉寫了成交價＝已簽約）：不用等網站重建，頁面立刻蓋成交章、預約帶看換成看類似物件
+      (async () => {
+        try {
+          const KEY = 'sb_publishable_TFAFZE-d5n0ElisMATr9rw_ku8be1xT';
+          const res = await fetch('https://dlfleszjcfeickibjcee.supabase.co/rest/v1/rpc/store_archive_status', {
+            method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: '{}',
+          });
+          if (!res.ok) return;
+          if ((await res.json())[hid] !== '已成交') return;
+          const bar = document.createElement('div');
+          bar.className = 'max-w-md mx-auto bg-slate-900 py-3 flex justify-center select-none';
+          bar.innerHTML = '<span class="-rotate-3 border-4 border-rose-500 text-rose-500 rounded-xl px-6 py-0.5 text-4xl font-black tracking-widest">已成交</span>';
+          const main = document.querySelector('main');
+          if (main && main.parentNode) main.parentNode.insertBefore(bar, main);
+          const book = document.getElementById('bookOpen');
+          if (book) book.outerHTML = '<a href="/cases" class="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold h-12 rounded-xl flex items-center justify-center text-sm">看類似物件</a>';
+        } catch (e) { /* 查不到就維持原樣 */ }
+      })();
+    </script>
+  )}
   {archived && (
     <script is:inline define:vars={{ hid: item.id }}>
       // 存檔頁的字樣以後台當下狀態為準（只有「已成交」寫已成交，其餘寫已下架）；查不到就維持建置時的字樣

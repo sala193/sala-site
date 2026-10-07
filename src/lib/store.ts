@@ -29,7 +29,11 @@ export function photosOf(item: Item): string[] {
 /** 銷售頁存檔：官網已撤下、但我們留著凍結內容的案件（只給莎拉手動分享，不進店鋪清單、不進搜尋引擎） */
 export function archivedCases(): Item[] {
   const live = new Set((listings as Item[]).map((it) => it.id));
-  return Object.values(archive as Record<string, Item>).filter((it) => !live.has(it.id));
+  const out = new Map<string, Item>();
+  for (const it of Object.values(archive as Record<string, Item>)) if (!live.has(it.id)) out.set(it.id, it);
+  // 後台標了「已成交」（莎拉寫了成交價＝已簽約進代書）：官網還沒撤下也不用等，直接當存檔頁、不進店鋪清單
+  for (const it of listings as Item[]) if (closedIds.has(it.id) && !out.has(it.id)) out.set(it.id, it);
+  return [...out.values()];
 }
 
 /** 存檔頁寫「已成交」還是「已下架」：只有後台標「已成交」才寫已成交（每天同步，頁面上也會即時再查一次） */
@@ -37,10 +41,13 @@ export function archiveLabel(id: string): '已成交' | '已下架' {
   return (archiveStatus as Record<string, string>)[id] === '已成交' ? '已成交' : '已下架';
 }
 
-/** 全部案件（同一個官網 id 只留一筆） */
+// 後台狀態是「已成交」的官網案號（每天同步 archive-status.json）
+export const closedIds = new Set(Object.entries(archiveStatus as Record<string, string>).filter(([, s]) => s === '已成交').map(([id]) => id));
+
+/** 全部案件（同一個官網 id 只留一筆；後台已成交的不放進店鋪清單） */
 export function allCases(): Item[] {
   const byId = new Map<string, Item>();
-  for (const it of listings as Item[]) if (!byId.has(it.id)) byId.set(it.id, it);
+  for (const it of listings as Item[]) if (!byId.has(it.id) && !closedIds.has(it.id)) byId.set(it.id, it);
   return [...byId.values()];
 }
 
