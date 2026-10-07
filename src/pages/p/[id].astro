@@ -112,6 +112,12 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
   </header>
 
 
+  {archived && (
+    <div class="max-w-md mx-auto bg-slate-900 py-3 flex justify-center select-none">
+      <span id="archiveStamp" class="-rotate-3 border-4 border-rose-500 text-rose-500 rounded-xl px-6 py-0.5 text-4xl font-black tracking-widest">{archiveText}</span>
+    </div>
+  )}
+
   <main class="max-w-md mx-auto bg-white min-h-screen shadow-sm border-x border-slate-100">
 
     <!-- 1. 大圖輪播 -->
@@ -135,12 +141,6 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
             <div class="swiper-button-next"></div>
             <div class="swiper-button-prev"></div>
           </div>
-
-          {archived && (
-            <div class="absolute inset-x-0 top-[22%] z-10 flex justify-center pointer-events-none select-none">
-              <span id="archiveStamp" class="-rotate-12 border-4 border-rose-600 text-rose-600 bg-white/85 rounded-xl px-6 py-1.5 text-5xl font-black tracking-widest shadow-lg">{archiveText}</span>
-            </div>
-          )}
 
           <div class="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5 pointer-events-none">
             {tags.map((t) => (
