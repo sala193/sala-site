@@ -111,11 +111,6 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
     </div>
   </header>
 
-  {archived && (
-    <div id="archiveBar" data-house={item.id} data-label={archiveText} class="max-w-md mx-auto bg-slate-900 text-white text-center text-sm font-bold py-2.5 px-4">
-      <span id="archiveBarText">{archiveText === '已成交' ? '此物件已成交（銷售頁存檔）' : '此物件已下架（銷售頁存檔）'}</span>
-    </div>
-  )}
 
   <main class="max-w-md mx-auto bg-white min-h-screen shadow-sm border-x border-slate-100">
 
@@ -559,7 +554,6 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
           const label = st === '已成交' ? '已成交' : '已下架';
           const stamp = document.getElementById('archiveStamp'); if (stamp) stamp.textContent = label;
           const price = document.getElementById('archivePrice'); if (price) price.textContent = label;
-          const bar = document.getElementById('archiveBarText'); if (bar) bar.textContent = '此物件' + label + '（銷售頁存檔）';
         } catch (e) { /* 查不到就維持原字樣 */ }
       })();
     </script>
