@@ -103,38 +103,57 @@ async function fetchDetail(id) {
     images.push(src);
   }
   const detail = parseDetail(html);
-  // 720° VR：官網公開的 VR 介接網址（不用登入、不加密）。沒有 VR 的案件 stageInfo 是空的，就不放。
-  try {
-    const vr = await fetch(`https://buy.yungching.com.tw/api/v2/house/vr?id=${id}`, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36' }
-    });
-    if (vr.ok) {
-      const j = await vr.json();
-      const url = j?.data?.stageInfo?.iStagingUrl;
-      if (url && /^https:\/\//.test(url)) detail.vrUrl = url;
-    }
-  } catch {
-    /* VR 抓不到就不顯示，不影響其他資料 */
-  }
-  // 專人導覽影片：官網公開的介接 house/introvideo（不用登入、不加密），回傳的是 YouTube 連結。
-  // 只存 11 碼影片代碼（網址由頁面自己組，不信任外來字串）；沒有影片的案件 stageInfo 是空的，就不放。
-  try {
-    const iv = await fetch(`https://buy.yungching.com.tw/api/v2/house/introvideo?id=${id}`, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36' }
-    });
-    if (iv.ok) {
-      const j = await iv.json();
-      const raw = j?.data?.stageInfo?.introVideo;
-      const vid = youtubeIdFrom(raw);
-      if (vid) {
-        detail.introVideoId = vid;
-        if (/youtube\.com\/shorts\//.test(String(raw))) detail.introVideoShorts = true;
-      }
-    }
-  } catch {
-    /* 影片抓不到就不顯示，不影響其他資料 */
-  }
+  // 720° VR 環景與專人導覽影片：官網公開介接（不用登入、不加密），見 fetchMedia
+  applyMedia(detail, await fetchMedia(id), true);
   return { images, detail };
+}
+
+const API_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
+
+// 720° VR 環景（house/vr）與專人導覽影片（house/introvideo）：都是官網公開的介接，不用登入、不加密。
+// 獨立成函式，因為詳情頁偶爾會被官網擋（例如從 GitHub 機房連線會 HTTP 403），但這兩個介接仍可能抓得到。
+// 回傳 { vr, video }：undefined＝連不上（沿用舊值）、null＝官網沒有、有值＝官網有。
+// 影片只存 11 碼代碼（網址由頁面自己組，不信任外來字串）。
+async function fetchMedia(id) {
+  const base = 'https://buy.yungching.com.tw/api/v2/house';
+  const out = { vr: undefined, video: undefined };
+  try {
+    const r = await fetch(`${base}/vr?id=${id}`, { headers: { 'User-Agent': API_UA } });
+    if (r.ok) {
+      const url = (await r.json())?.data?.stageInfo?.iStagingUrl;
+      out.vr = url && /^https:\/\//.test(url) ? url : null;
+    }
+  } catch {
+    /* VR 抓不到就維持原樣，不影響其他資料 */
+  }
+  try {
+    const r = await fetch(`${base}/introvideo?id=${id}`, { headers: { 'User-Agent': API_UA } });
+    if (r.ok) {
+      const raw = (await r.json())?.data?.stageInfo?.introVideo;
+      const vid = youtubeIdFrom(raw);
+      out.video = vid ? { id: vid, shorts: /youtube\.com\/shorts\//.test(String(raw)) } : null;
+    }
+  } catch {
+    /* 影片抓不到就維持原樣，不影響其他資料 */
+  }
+  return out;
+}
+
+// 把 fetchMedia 的結果寫進詳情。fresh＝詳情是剛從頁面解析出來的（只補不刪，維持原本 VR 行為）；
+// 否則是沿用舊資料，官網確定沒有了（null）就一併移除。連不上（undefined）一律不動。
+function applyMedia(detail, media, fresh) {
+  if (!detail || !media) return;
+  if (media.vr) detail.vrUrl = media.vr;
+  else if (media.vr === null && !fresh) delete detail.vrUrl;
+  if (media.video) {
+    detail.introVideoId = media.video.id;
+    if (media.video.shorts) detail.introVideoShorts = true;
+    else delete detail.introVideoShorts;
+  } else if (media.video === null) {
+    delete detail.introVideoId;
+    delete detail.introVideoShorts;
+  }
 }
 
 function extractMaxPage(html) {
@@ -370,6 +389,12 @@ async function main() {
       const prev = previous.get(item.id);
       if (prev?.detail) item.detail = prev.detail;
       item.images = prev?.images?.length ? prev.images : item.image ? [item.image] : [];
+      // 詳情頁被擋時，720 環景與專人導覽影片的公開介接仍可能抓得到：照樣更新（連不上就維持舊值）
+      const media = await fetchMedia(item.id);
+      if (item.detail || media.vr || media.video) {
+        item.detail = item.detail || {};
+        applyMedia(item.detail, media, false);
+      }
     }
     if ((i + 1) % 20 === 0 || i === listings.length - 1) {
       console.log(`  已完成 ${i + 1}/${listings.length}`);
