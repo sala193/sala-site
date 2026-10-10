@@ -31,6 +31,7 @@ import { writeFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { parseDetail } from './parse-detail.mjs';
+import { youtubeIdFrom } from './youtube-id.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -114,6 +115,24 @@ async function fetchDetail(id) {
     }
   } catch {
     /* VR 抓不到就不顯示，不影響其他資料 */
+  }
+  // 專人導覽影片：官網公開的介接 house/introvideo（不用登入、不加密），回傳的是 YouTube 連結。
+  // 只存 11 碼影片代碼（網址由頁面自己組，不信任外來字串）；沒有影片的案件 stageInfo 是空的，就不放。
+  try {
+    const iv = await fetch(`https://buy.yungching.com.tw/api/v2/house/introvideo?id=${id}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36' }
+    });
+    if (iv.ok) {
+      const j = await iv.json();
+      const raw = j?.data?.stageInfo?.introVideo;
+      const vid = youtubeIdFrom(raw);
+      if (vid) {
+        detail.introVideoId = vid;
+        if (/youtube\.com\/shorts\//.test(String(raw))) detail.introVideoShorts = true;
+      }
+    }
+  } catch {
+    /* 影片抓不到就不顯示，不影響其他資料 */
   }
   return { images, detail };
 }

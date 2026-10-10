@@ -13,11 +13,12 @@ import calendar from 'lucide-static/icons/calendar.svg?raw';
 import calendarCheck2 from 'lucide-static/icons/calendar-check-2.svg?raw';
 import x from 'lucide-static/icons/x.svg?raw';
 import shieldCheck from 'lucide-static/icons/shield-check.svg?raw';
+import play from 'lucide-static/icons/play.svg?raw';
 
 const ICONS: Record<string, string> = {
   'share-2': share2, heart, 'map-pin': mapPin, 'external-link': externalLink, check, scan, sparkles,
   'maximize-2': maximize2, 'phone-call': phoneCall, calendar, 'calendar-check-2': calendarCheck2, x,
-  'shield-check': shieldCheck,
+  'shield-check': shieldCheck, play,
 };
 const { name, class: cls = 'w-4 h-4' } = Astro.props as { name: string; class?: string };
 const svg = (ICONS[name] || '')

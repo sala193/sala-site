@@ -41,6 +41,10 @@ const cp = (copy as Record<string, { v: string[]; p: number }>)[item.id];
 const finalSummary = cp && cp.v.every((x: string) => x) ? cp.v[Math.min(Math.max(cp.p, 1), 3) - 1] : null;
 const summary = finalSummary || autoSummary;
 const vrUrl: string | null = d.vrUrl || null;
+// 影片介紹：官網「專人導覽」有影片才顯示。機器人每天從官網公開介接（house/introvideo）抓 YouTube 影片代碼；
+// 存檔頁（已成交／已下架）不顯示，避免影片裡燒進去的價格過期。代碼只接受 11 碼，網址由這裡自己組。
+const introVideoId: string | null = !archived && /^[A-Za-z0-9_-]{11}$/.test(d.introVideoId || '') ? d.introVideoId : null;
+const introVideoShorts: boolean = !!d.introVideoShorts;
 const pageTitle = `${title}｜${AGENT.brand} 心選好宅`;
 const desc = (archived ? `${address} ${item.type || ''} ${item.rooms || ''} ${archiveText}｜${AGENT.brand}為您服務` : `${address} ${item.type || ''} ${item.rooms || ''} 總價 ${priceNum}${priceUnit}｜${AGENT.brand}為您服務`).replace(/\s+/g, ' ').trim();
 
@@ -145,11 +149,21 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
             ))}
           </div>
 
-          {vrUrl && (
-            <a href="#vr-section" class="absolute bottom-[4.9rem] left-3 z-10 flex items-center space-x-1.5 bg-white/90 hover:bg-white text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg backdrop-blur-md active:scale-95">
-              <Icon name="scan" class="w-4 h-4 text-orange-600" />
-              <span>720° VR 實境</span>
-            </a>
+          {(vrUrl || introVideoId) && (
+            <div class="absolute bottom-[4.9rem] left-3 z-10 flex items-center gap-2">
+              {vrUrl && (
+                <a href="#vr-section" class="flex items-center space-x-1.5 bg-white/90 hover:bg-white text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg backdrop-blur-md active:scale-95">
+                  <Icon name="scan" class="w-4 h-4 text-orange-600" />
+                  <span>720° VR 實境</span>
+                </a>
+              )}
+              {introVideoId && (
+                <a href="#video-section" class="flex items-center space-x-1.5 bg-white/90 hover:bg-white text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg backdrop-blur-md active:scale-95">
+                  <Icon name="play" class="w-4 h-4 text-orange-600" />
+                  <span>影片介紹</span>
+                </a>
+              )}
+            </div>
           )}
 
           {photos.length > 1 && (
@@ -290,6 +304,40 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
           <span class="text-xs text-slate-400">滑動或拖曳可 360 度旋轉查看</span>
           <a href={vrUrl} target="_blank" rel="noopener" class="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center">
             全螢幕體驗 <Icon name="maximize-2" class="w-3.5 h-3.5 ml-1" />
+          </a>
+        </div>
+      </section>
+    )}
+
+    <!-- 5b. 影片介紹（官網「專人導覽」有影片才顯示；排在 720° VR 下面；YouTube 嵌入） -->
+    {introVideoId && (
+      <section id="video-section" class="p-5 border-b border-slate-100">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center space-x-2">
+            <div class="w-1.5 h-5 bg-orange-500 rounded-full"></div>
+            <h2 class="text-base font-bold text-slate-900">影片介紹</h2>
+          </div>
+          <span class="text-xs text-orange-600 font-semibold flex items-center">
+            <Icon name="play" class="w-3.5 h-3.5 mr-1" /> 專人導覽
+          </span>
+        </div>
+        <div class={`relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 ${introVideoShorts ? 'mx-auto w-full max-w-[300px]' : 'w-full'}`}>
+          <div class={introVideoShorts ? 'aspect-[9/16] w-full' : 'aspect-video w-full'}>
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${introVideoId}?rel=0&playsinline=1`}
+              class="w-full h-full border-0"
+              allow="encrypted-media; picture-in-picture; web-share"
+              allowfullscreen
+              loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"
+              title="專人導覽影片"
+            ></iframe>
+          </div>
+        </div>
+        <div class="flex items-center justify-between mt-2.5 px-1">
+          <span class="text-xs text-slate-400">若無法播放，請點右側在 YouTube 觀看</span>
+          <a href={`https://www.youtube.com/watch?v=${introVideoId}`} target="_blank" rel="noopener" class="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center">
+            在 YouTube 觀看 <Icon name="external-link" class="w-3.5 h-3.5 ml-1" />
           </a>
         </div>
       </section>
