@@ -5,6 +5,7 @@ export default {
     './src/pages/cases.astro',
     './src/pages/share.astro',
     './src/components/store/**/*.astro',
+    './src/lib/rentCard.ts',
     './src/layouts/StoreLayout.astro',
   ],
   corePlugins: { container: false },

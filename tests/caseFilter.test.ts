@@ -111,3 +111,93 @@ test('總價區間跟其他條件是「且」，也算有選條件；檔位與�
   assert.equal(priceLabel(10000), '1 億')
   assert.deepEqual(PRICE_STEPS, [...PRICE_STEPS].sort((a, b) => a - b))
 })
+
+// ---- 租／售（出租案件）----
+import { rentFlagsOf } from '../src/lib/caseFilter.ts'
+
+const rental = (over: Record<string, unknown> = {}) => rentFlagsOf({ type: '店面', category: '店面', parking: false, ...over })
+
+test('租／售：預設只看出售（出租不出現）；選出租只看出租；租和售都看；算一組條件', () => {
+  const sale = flagsOf(item('電梯大樓', '3房2廳2衛'))
+  const rent = rental()
+  const def = emptySelection()
+  assert.ok(matches(sale, def) && !matches(rent, def))
+  assert.equal(hasSelection(def), false)
+  const onlyRent = emptySelection()
+  onlyRent.deal = 'rent'
+  assert.ok(matches(rent, onlyRent) && !matches(sale, onlyRent))
+  assert.equal(hasSelection(onlyRent), true)
+  const both = emptySelection()
+  both.deal = 'both'
+  assert.ok(matches(rent, both) && matches(sale, both))
+})
+
+test('出租案件的條件：租屋網沒有房數、屋型、總價，選了這些就不出現；車位、廠房、土地有資料才算', () => {
+  const onlyRent = emptySelection()
+  onlyRent.deal = 'rent'
+  assert.ok(matches(rental(), onlyRent))
+  // 房數、電梯、公寓、透天、總價：出租案件沒有資料，不出現
+  const rooms = emptySelection(); rooms.deal = 'rent'; rooms.rooms.add('3')
+  assert.ok(!matches(rental(), rooms))
+  const elev = emptySelection(); elev.deal = 'rent'; elev.types.add('elevator')
+  assert.ok(!matches(rental(), elev))
+  const price = emptySelection(); price.deal = 'rent'; price.priceMin = 500
+  assert.ok(!matches(rental(), price))
+  // 車位：有寫才算
+  const park = emptySelection(); park.deal = 'rent'; park.parking = true
+  assert.ok(!matches(rental({ parking: false }), park) && matches(rental({ parking: true }), park))
+  // 廠房、土地
+  const fac = emptySelection(); fac.deal = 'rent'; fac.types.add('factory')
+  assert.ok(matches(rental({ type: '廠房', category: '廠房' }), fac) && !matches(rental(), fac))
+  const land = emptySelection(); land.deal = 'both'; land.types.add('land')
+  assert.ok(matches(rental({ type: '土地', category: '土地' }), land))
+})
+
+// ---- 屋齡 ----
+test('屋齡區間：5年內、5~10、10~20、20~30、30年以上；邊界歸小的那一格；同一類是「或」', () => {
+  const age = (n: number | null) => flagsOf({ type: '電梯大樓', rooms: '3房2廳2衛', price: 1000, age: n, detail: null })
+  const pick = (...keys: ('5' | '10' | '20' | '30' | '30+')[]) => {
+    const s = emptySelection()
+    keys.forEach((k) => s.ages.add(k))
+    return s
+  }
+  assert.ok(matches(age(0), pick('5')) && matches(age(5), pick('5')) && !matches(age(5.1), pick('5')))
+  assert.ok(matches(age(5.1), pick('10')) && matches(age(10), pick('10')) && !matches(age(10.1), pick('10')))
+  assert.ok(matches(age(15), pick('20')) && matches(age(25), pick('30')) && !matches(age(30.5), pick('30')))
+  assert.ok(matches(age(30.5), pick('30+')) && matches(age(45), pick('30+')) && !matches(age(30), pick('30+')))
+  // 同一類是「或」
+  assert.ok(matches(age(3), pick('5', '30+')) && matches(age(40), pick('5', '30+')) && !matches(age(15), pick('5', '30+')))
+  // 沒有屋齡資料（出租案件）選了屋齡就不出現；沒選屋齡不受影響
+  const onlyRent = pick('5'); onlyRent.deal = 'rent'
+  assert.ok(!matches(rentFlagsOf({ type: '店面' }), onlyRent))
+  assert.ok(!matches(age(null), pick('5')) && matches(age(null), emptySelection()))
+  // 算一組條件
+  assert.equal(hasSelection(pick('5')), true)
+})
+
+test('生活圈：選了只看那個生活圈；沒有生活圈的案件（出售、出租都一樣）選了就不出現', () => {
+  const FENG = '鳳鳴重劃區生活圈'
+  const JIAN = '尖山二橋生活圈'
+  const withArea = (area: string | null) => ({ ...flagsOf(item('電梯大樓', '3房2廳2衛')), area })
+  const s = emptySelection()
+  s.areas.add(FENG)
+  assert.equal(hasSelection(s), true)
+  assert.ok(matches(withArea(FENG), s))
+  assert.ok(!matches(withArea(JIAN), s))
+  assert.ok(!matches(withArea(null), s))
+  // 兩個都選＝或
+  s.areas.add(JIAN)
+  assert.ok(matches(withArea(JIAN), s))
+  assert.ok(!matches(withArea(null), s))
+  // 沒選＝全部都過
+  assert.ok(matches(withArea(null), emptySelection()))
+  // 出租案件：後台給的 area 也算；沒有就不出現
+  const rent = (area?: string | null) => rentFlagsOf({ type: '住宅', category: '住宅', area })
+  const r = emptySelection()
+  r.deal = 'rent'
+  r.areas.add(JIAN)
+  assert.ok(matches(rent(JIAN), r))
+  assert.ok(!matches(rent(FENG), r))
+  assert.ok(!matches(rent(null), r))
+  assert.ok(!matches(rent(), r))
+})

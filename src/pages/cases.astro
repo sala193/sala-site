@@ -4,7 +4,7 @@
 import StoreLayout from '../layouts/StoreLayout.astro';
 import Icon from '../components/store/Icon.astro';
 import { AGENT, allCases, photosOf, priceParts, districtOf, kindOf, roadOf, titleOf } from '../lib/store';
-import { flagsOf, PRICE_STEPS, priceLabel } from '../lib/caseFilter';
+import { AGE_BUCKETS, flagsOf, LIVING_AREAS, PRICE_STEPS, priceLabel } from '../lib/caseFilter';
 
 const cases = allCases().map((it) => {
   const [pn, pu] = priceParts(it.price);
@@ -15,6 +15,7 @@ const cases = allCases().map((it) => {
     road: roadOf(it),
     kind: kindOf(it),
     flags: flagsOf(it),
+    age: typeof it.age === 'number' ? it.age : null,
     type: it.type,
     rooms: it.rooms,
     ping: it.buildingPing || it.landPing,
@@ -34,6 +35,12 @@ const CHIP = 'chip h-9 px-3.5 rounded-full text-sm font-semibold border bg-white
 const roomChips: [string, string][] = [['2', '2房'], ['3', '3房'], ['4+', '4房以上']];
 const condChips: [string, string, string][] = [['parking', '', '車位'], ['types', 'elevator', '電梯'], ['types', 'apartment', '公寓'], ['types', 'townhouse', '透天']];
 const advChips: [string, string, string][] = [['types', 'factory', '廠房'], ['types', 'land', '土地']];
+// 租／售（跟後台一樣放進進階）：出售（預設，出租案件不出現）／出租（莎拉 2026-10-11 不要「租和售」）
+const dealChips: [string, string][] = [['', '出售'], ['rent', '出租']];
+// 生活圈（進階，可多選）：由後台資料庫算好，開頁面時讀（見下方 script）
+const areaChips: [string, string][] = LIVING_AREAS.map((a) => [a.key, a.label]);
+// 屋齡（進階，可多選）
+const ageChips: [string, string][] = AGE_BUCKETS.map((b) => [b.key, b.label]);
 const title = `${AGENT.brand}的店鋪｜鶯歌．鳳鳴好房`;
 const desc = `${AGENT.brand}（${AGENT.store}）目前在賣的房子，共 ${cases.length} 間，每間都可以直接問我。`;
 ---
@@ -67,6 +74,24 @@ const desc = `${AGENT.brand}（${AGENT.store}）目前在賣的房子，共 ${ca
           ))}
         </div>
         <div id="advPanel" class="hidden space-y-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-sm font-semibold text-slate-600 shrink-0">租／售</span>
+            {dealChips.map(([v, label]) => (
+              <button type="button" data-g="deal" data-v={v} aria-pressed="false" class={CHIP}>{label}</button>
+            ))}
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-sm font-semibold text-slate-600 shrink-0">生活圈</span>
+            {areaChips.map(([v, label]) => (
+              <button type="button" data-g="areas" data-v={v} aria-pressed="false" class={CHIP}>{label}</button>
+            ))}
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-sm font-semibold text-slate-600 shrink-0">屋齡</span>
+            {ageChips.map(([v, label]) => (
+              <button type="button" data-g="ages" data-v={v} aria-pressed="false" class={CHIP}>{label}</button>
+            ))}
+          </div>
           <div class="flex flex-wrap gap-2">
             {advChips.map(([g, v, label]) => (
               <button type="button" data-g={g} data-v={v} data-adv="1" aria-pressed="false" class={CHIP}>{label}</button>
@@ -107,8 +132,8 @@ const desc = `${AGENT.brand}（${AGENT.store}）目前在賣的房子，共 ${ca
   <main class="max-w-5xl mx-auto px-4 py-4">
     <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {cases.map((c, i) => (
-        <a href={`/p/${c.id}`} class="card block bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-shadow" data-kind={c.kind} data-district={c.district} data-price={c.price} data-i={i}
-          data-rooms={c.flags.rooms ?? ''} data-parking={c.flags.parking ? '1' : ''} data-elevator={c.flags.elevator ? '1' : ''} data-apartment={c.flags.apartment ? '1' : ''} data-townhouse={c.flags.townhouse ? '1' : ''} data-factory={c.flags.factory ? '1' : ''} data-land={c.flags.land ? '1' : ''}>
+        <a href={`/p/${c.id}`} class="card block bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-shadow" data-id={c.id} data-kind={c.kind} data-district={c.district} data-price={c.price} data-i={i}
+          data-age={c.age ?? ''} data-rooms={c.flags.rooms ?? ''}data-parking={c.flags.parking ? '1' : ''} data-elevator={c.flags.elevator ? '1' : ''} data-apartment={c.flags.apartment ? '1' : ''} data-townhouse={c.flags.townhouse ? '1' : ''} data-factory={c.flags.factory ? '1' : ''} data-land={c.flags.land ? '1' : ''}>
           <div class="relative aspect-[4/3] bg-slate-100 grid place-items-center text-slate-300 text-sm">
             {c.cover ? <img src={c.cover} alt={c.name} class="w-full h-full object-cover" loading={i < 6 ? 'eager' : 'lazy'} decoding="async" /> : <span>照片整理中</span>}
             <div class="absolute top-2.5 left-2.5 flex gap-1.5">
@@ -157,11 +182,13 @@ const desc = `${AGENT.brand}（${AGENT.store}）目前在賣的房子，共 ${ca
   </div>
 
   <script>
-    import { emptySelection, hasSelection, matches } from '../lib/caseFilter';
-    import type { Flags, RoomKey, TypeKey } from '../lib/caseFilter';
+    import { emptySelection, hasSelection, matches, rentFlagsOf } from '../lib/caseFilter';
+    import type { AgeKey, Flags, RoomKey, TypeKey } from '../lib/caseFilter';
+    import { rentCardHtml } from '../lib/rentCard';
+    import type { Rental } from '../lib/rentCard';
     if (new URLSearchParams(location.search).get('act') === 'book') document.getElementById('bookNote')?.classList.remove('hidden');
     const grid = document.getElementById('grid')!;
-    const cards = [...grid.querySelectorAll<HTMLElement>('.card')];
+    const cards: HTMLElement[] = [...grid.querySelectorAll<HTMLElement>('.card')];
     const districtSel = document.getElementById('district') as HTMLSelectElement;
     const sortSel = document.getElementById('sort') as HTMLSelectElement;
     const chipBtns = [...document.querySelectorAll<HTMLElement>('#chips [data-g]')];
@@ -175,7 +202,7 @@ const desc = `${AGENT.brand}（${AGENT.store}）目前在賣的房子，共 ${ca
     const sel = emptySelection();
     const flagsOfCard = (c: HTMLElement): Flags => {
       const d = c.dataset;
-      return { rooms: d.rooms === '' ? null : Number(d.rooms), price: Number(d.price) > 0 ? Number(d.price) : null, parking: !!d.parking, elevator: !!d.elevator, apartment: !!d.apartment, townhouse: !!d.townhouse, factory: !!d.factory, land: !!d.land };
+      return { rooms: d.rooms === '' ? null : Number(d.rooms), price: Number(d.price) > 0 ? Number(d.price) : null, parking: !!d.parking, elevator: !!d.elevator, apartment: !!d.apartment, townhouse: !!d.townhouse, factory: !!d.factory, land: !!d.land, rent: d.rent === '1', age: d.age === '' || d.age === undefined ? null : Number(d.age), area: null };
     };
     const cardFlags = new Map(cards.map((c) => [c, flagsOfCard(c)]));
     const setOn = (el: HTMLElement, on: boolean) => {
@@ -190,12 +217,17 @@ const desc = `${AGENT.brand}（${AGENT.store}）目前在賣的房子，共 ${ca
     function paint() {
       for (const b of chipBtns) {
         const v = b.dataset.v!;
-        const on = b.dataset.g === 'rooms' ? sel.rooms.has(v as RoomKey) : b.dataset.g === 'parking' ? sel.parking : sel.types.has(v as TypeKey);
+        const g = b.dataset.g;
+        const on = g === 'rooms' ? sel.rooms.has(v as RoomKey) : g === 'parking' ? sel.parking : g === 'deal' ? sel.deal === v : g === 'ages' ? sel.ages.has(v as AgeKey) : g === 'areas' ? sel.areas.has(v) : sel.types.has(v as TypeKey);
         setOn(b, on);
         b.setAttribute('aria-pressed', String(on));
       }
       const hasPrice = sel.priceMin !== null || sel.priceMax !== null;
-      const n = (['factory', 'land'] as TypeKey[]).filter((k) => sel.types.has(k)).length + (hasPrice ? 1 : 0);
+      const n = (['factory', 'land'] as TypeKey[]).filter((k) => sel.types.has(k)).length + (hasPrice ? 1 : 0) + (sel.deal ? 1 : 0) + (sel.ages.size ? 1 : 0) + (sel.areas.size ? 1 : 0);
+      // 只看出租時，排序寫月租（出租沒有總價）
+      const rentOnly = sel.deal === 'rent';
+      sortSel.options[1].textContent = rentOnly ? '月租低到高' : '總價低到高';
+      sortSel.options[2].textContent = rentOnly ? '月租高到低' : '總價高到低';
       advBtn.textContent = n ? `進階（${n}）` : '進階';
       setOn(advBtn, n > 0);
       clearBtn.classList.toggle('hidden', !hasSelection(sel));
@@ -207,18 +239,26 @@ const desc = `${AGENT.brand}（${AGENT.store}）目前在賣的房子，共 ${ca
         c.classList.toggle('hidden', !ok);
         if (ok) shown++;
       }
+      // 出售與出租分開排：出售在前（依總價或預設順序），出租在後（依月租或預設順序）
+      const grp = (c: HTMLElement) => (c.dataset.rent === '1' ? 1 : 0);
       const ordered = [...cards];
-      if (sortSel.value === 'asc') ordered.sort((a, b) => +a.dataset.price! - +b.dataset.price!);
-      else if (sortSel.value === 'desc') ordered.sort((a, b) => +b.dataset.price! - +a.dataset.price!);
+      if (sortSel.value === 'asc') ordered.sort((a, b) => grp(a) - grp(b) || +a.dataset.price! - +b.dataset.price!);
+      else if (sortSel.value === 'desc') ordered.sort((a, b) => grp(a) - grp(b) || +b.dataset.price! - +a.dataset.price!);
       else ordered.sort((a, b) => +a.dataset.i! - +b.dataset.i!);
       ordered.forEach((c) => grid.appendChild(c));
       count.textContent = `共 ${shown} 間`;
       empty.classList.toggle('hidden', shown > 0);
+      empty.textContent = sel.deal !== '' && rentalsFailed ? '出租案件暫時讀不到，請直接 LINE 我，我馬上回覆您。'
+        : sel.areas.size && areasFailed ? '生活圈暫時讀不到，請先不選生活圈，或直接 LINE 我。'
+        : '這個條件目前沒有房子，換個條件看看，或直接 LINE 我。';
     }
     chipBtns.forEach((b) => b.addEventListener('click', () => {
       const v = b.dataset.v!;
       if (b.dataset.g === 'rooms') toggle(sel.rooms, v as RoomKey);
       else if (b.dataset.g === 'parking') sel.parking = !sel.parking;
+      else if (b.dataset.g === 'deal') sel.deal = v as typeof sel.deal;
+      else if (b.dataset.g === 'ages') toggle(sel.ages, v as AgeKey);
+      else if (b.dataset.g === 'areas') toggle(sel.areas, v);
       else toggle(sel.types, v as TypeKey);
       paint();
       apply();
@@ -245,11 +285,70 @@ const desc = `${AGENT.brand}（${AGENT.store}）目前在賣的房子，共 ${ca
       priceMaxSel.value = '';
       sel.priceMin = null;
       sel.priceMax = null;
+      sel.deal = '';
+      sel.ages.clear();
+      sel.areas.clear();
       paint();
       apply();
     });
     districtSel.addEventListener('change', apply);
     sortSel.addEventListener('change', apply);
+
+    // 出租案件：開頁面時去後台的公開窗口讀（只有租屋網上本來就公開的欄位），畫成卡片放在出售案件後面。
+    // 預設不出現，要在「進階」選「出租」或「租和售」才會顯示。讀不到就維持現狀，選了出租會提示請直接 LINE。
+    let rentalsFailed = false;
+    (async () => {
+      try {
+        const KEY = 'sb_publishable_TFAFZE-d5n0ElisMATr9rw_ku8be1xT';
+        const res = await fetch('https://dlfleszjcfeickibjcee.supabase.co/rest/v1/rpc/store_rentals', {
+          method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: '{}',
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const list = (await res.json()) as Rental[];
+        if (!Array.isArray(list)) throw new Error('格式不對');
+        const tpl = document.createElement('template');
+        tpl.innerHTML = list.map((r, i) => rentCardHtml(r, i)).join('');
+        const known = new Set([...districtSel.options].map((o) => o.value));
+        const els = [...tpl.content.children] as HTMLElement[]; // 先收齊再搬：搬走一張，原本的順序會跟著變
+        list.forEach((r, i) => {
+          const el = els[i];
+          if (!el) return;
+          grid.appendChild(el);
+          cards.push(el);
+          cardFlags.set(el, rentFlagsOf(r));
+          if (r.district && !known.has(r.district)) {
+            known.add(r.district);
+            districtSel.add(new Option(r.district, r.district));
+          }
+        });
+      } catch {
+        rentalsFailed = true;
+      }
+      apply();
+    })();
+
+    // 生活圈：出售案件的生活圈（官網案號 → 生活圈），開頁面時去後台的公開窗口讀；只有路名／莎拉標的結果，沒有任何私有資料。
+    // 讀不到就維持現狀（選了生活圈會提示），不影響其他篩選。
+    let areasFailed = false;
+    (async () => {
+      try {
+        const KEY = 'sb_publishable_TFAFZE-d5n0ElisMATr9rw_ku8be1xT';
+        const res = await fetch('https://dlfleszjcfeickibjcee.supabase.co/rest/v1/rpc/store_areas', {
+          method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: '{}',
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const map = (await res.json()) as Record<string, string>;
+        if (!map || typeof map !== 'object' || Array.isArray(map)) throw new Error('格式不對');
+        for (const c of cards) {
+          const area = c.dataset.id ? map[c.dataset.id] : undefined;
+          if (area) cardFlags.get(c)!.area = area;
+        }
+      } catch {
+        areasFailed = true;
+      }
+      apply();
+    })();
+
     // 瀏覽器重新整理時會記住下拉選項，載入時先讀一次，畫面和篩選才會一致
     readPrice();
   </script>
