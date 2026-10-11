@@ -4,7 +4,9 @@
 // 資料來自永慶官網公開頁（listings.json），照片優先用我們的圖庫；官網沒寫的欄位就不顯示，不猜。
 import StoreLayout from '../../layouts/StoreLayout.astro';
 import Icon from '../../components/store/Icon.astro';
-import { AGENT, allCases, archivedCases, archiveLabel, photosOf, priceParts, districtOf, titleOf, caseNoShort } from '../../lib/store';
+import SimilarCases from '../../components/store/SimilarCases.astro';
+import { AGENT, allCases, archivedCases, archiveLabel, photosOf, priceParts, districtOf, kindOf, titleOf, caseNoShort } from '../../lib/store';
+import { similarCases } from '../../lib/similar';
 import { SHARE_EVENT_URL } from '../../lib/agent';
 import { buildModules, buildSummary, tagsFor } from '../../lib/notes';
 import appeal from '../../data/appeal.json';
@@ -25,6 +27,7 @@ const { item, archived } = Astro.props as { item: ReturnType<typeof allCases>[nu
 const archiveText = archived ? archiveLabel(item.id) : '';
 const d = (item as any).detail || {};
 const photos = photosOf(item);
+const similar = similarCases(item as any, allCases() as any[], { districtOf, kindOf });
 const title = titleOf(item);
 const address = item.address || '';
 const [priceNum, priceUnit] = priceParts(item.price);
@@ -363,6 +366,9 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
         <p class="text-[11px] text-slate-400 mt-3">資料來源：永慶不動產公開物件資料，實際以現場及地政機關登記為準。</p>
       </section>
     )}
+
+    <!-- 類似的房子：同社區、鄰近、房數與屋齡相近（存檔頁也放，客人看到已成交的那間可以接著看別的） -->
+    <SimilarCases items={similar} />
 
     <!-- 7. 莎拉個人品牌卡 -->
     <section class="p-5 border-b border-slate-100">
