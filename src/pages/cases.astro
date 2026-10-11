@@ -4,6 +4,7 @@
 import StoreLayout from '../layouts/StoreLayout.astro';
 import Icon from '../components/store/Icon.astro';
 import { AGENT, allCases, photosOf, priceParts, districtOf, kindOf, roadOf, titleOf } from '../lib/store';
+import { flagsOf, PRICE_STEPS, priceLabel } from '../lib/caseFilter';
 
 const cases = allCases().map((it) => {
   const [pn, pu] = priceParts(it.price);
@@ -13,6 +14,7 @@ const cases = allCases().map((it) => {
     district: districtOf(it),
     road: roadOf(it),
     kind: kindOf(it),
+    flags: flagsOf(it),
     type: it.type,
     rooms: it.rooms,
     ping: it.buildingPing || it.landPing,
@@ -27,7 +29,11 @@ const cases = allCases().map((it) => {
 
 const districts = [...new Set(cases.map((c) => c.district))].sort((a, b) =>
   cases.filter((c) => c.district === b).length - cases.filter((c) => c.district === a).length);
-const kinds = ['住宅', '透天', '店面辦公', '廠房', '土地'].filter((k) => cases.some((c) => c.kind === k));
+// 篩選按鈕：兩排、不用左右滑（手機按鈕太多不好按）；廠房、土地收在「進階」裡
+const CHIP = 'chip h-9 px-3.5 rounded-full text-sm font-semibold border bg-white text-slate-700 border-slate-200';
+const roomChips: [string, string][] = [['2', '2房'], ['3', '3房'], ['4+', '4房以上']];
+const condChips: [string, string, string][] = [['parking', '', '車位'], ['types', 'elevator', '電梯'], ['types', 'apartment', '公寓'], ['types', 'townhouse', '透天']];
+const advChips: [string, string, string][] = [['types', 'factory', '廠房'], ['types', 'land', '土地']];
 const title = `${AGENT.brand}的店鋪｜鶯歌．鳳鳴好房`;
 const desc = `${AGENT.brand}（${AGENT.store}）目前在賣的房子，共 ${cases.length} 間，每間都可以直接問我。`;
 ---
@@ -48,11 +54,37 @@ const desc = `${AGENT.brand}（${AGENT.store}）目前在賣的房子，共 ${ca
 
   <section class="sticky top-0 z-30 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/70">
     <div class="max-w-5xl mx-auto px-4 pt-3 pb-2">
-      <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2" id="kindChips">
-        <button type="button" data-kind="" class="chip shrink-0 px-3.5 py-1.5 rounded-full text-sm font-semibold border bg-slate-900 text-white border-slate-900">全部 {cases.length}</button>
-        {kinds.map((k) => (
-          <button type="button" data-kind={k} class="chip shrink-0 px-3.5 py-1.5 rounded-full text-sm font-semibold border bg-white text-slate-700 border-slate-200">{k} {cases.filter((c) => c.kind === k).length}</button>
-        ))}
+      <div class="space-y-2 pb-2" id="chips">
+        <div class="flex flex-wrap items-center gap-2">
+          {roomChips.map(([v, label]) => (
+            <button type="button" data-g="rooms" data-v={v} aria-pressed="false" class={CHIP}>{label}</button>
+          ))}
+          <button type="button" id="advBtn" aria-expanded="false" class={`${CHIP} ml-auto`}>進階</button>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          {condChips.map(([g, v, label]) => (
+            <button type="button" data-g={g} data-v={v} aria-pressed="false" class={CHIP}>{label}</button>
+          ))}
+        </div>
+        <div id="advPanel" class="hidden space-y-2">
+          <div class="flex flex-wrap gap-2">
+            {advChips.map(([g, v, label]) => (
+              <button type="button" data-g={g} data-v={v} data-adv="1" aria-pressed="false" class={CHIP}>{label}</button>
+            ))}
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-semibold text-slate-600 shrink-0">總價</span>
+            <select id="priceMin" aria-label="最低總價" class="flex-1 min-w-0 h-9 text-sm px-3 rounded-xl border border-slate-200 bg-white">
+              <option value="">不限</option>
+              {PRICE_STEPS.map((n) => <option value={n}>{priceLabel(n)}</option>)}
+            </select>
+            <span class="text-slate-400 shrink-0">～</span>
+            <select id="priceMax" aria-label="最高總價" class="flex-1 min-w-0 h-9 text-sm px-3 rounded-xl border border-slate-200 bg-white">
+              <option value="">不限</option>
+              {PRICE_STEPS.map((n) => <option value={n}>{priceLabel(n)}</option>)}
+            </select>
+          </div>
+        </div>
       </div>
       <div class="flex gap-2">
         <select id="district" aria-label="區域" class="flex-1 text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white">
@@ -65,14 +97,18 @@ const desc = `${AGENT.brand}（${AGENT.store}）目前在賣的房子，共 ${ca
           <option value="desc">總價高到低</option>
         </select>
       </div>
-      <p class="text-xs text-slate-400 mt-2" id="count">共 {cases.length} 間</p>
+      <div class="flex items-center justify-between mt-2">
+        <p class="text-xs text-slate-400" id="count">共 {cases.length} 間</p>
+        <button type="button" id="clearBtn" class="hidden text-xs font-semibold text-slate-600 underline underline-offset-2 px-1 py-1">清除</button>
+      </div>
     </div>
   </section>
 
   <main class="max-w-5xl mx-auto px-4 py-4">
     <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {cases.map((c, i) => (
-        <a href={`/p/${c.id}`} class="card block bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-shadow" data-kind={c.kind} data-district={c.district} data-price={c.price} data-i={i}>
+        <a href={`/p/${c.id}`} class="card block bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-shadow" data-kind={c.kind} data-district={c.district} data-price={c.price} data-i={i}
+          data-rooms={c.flags.rooms ?? ''} data-parking={c.flags.parking ? '1' : ''} data-elevator={c.flags.elevator ? '1' : ''} data-apartment={c.flags.apartment ? '1' : ''} data-townhouse={c.flags.townhouse ? '1' : ''} data-factory={c.flags.factory ? '1' : ''} data-land={c.flags.land ? '1' : ''}>
           <div class="relative aspect-[4/3] bg-slate-100 grid place-items-center text-slate-300 text-sm">
             {c.cover ? <img src={c.cover} alt={c.name} class="w-full h-full object-cover" loading={i < 6 ? 'eager' : 'lazy'} decoding="async" /> : <span>照片整理中</span>}
             <div class="absolute top-2.5 left-2.5 flex gap-1.5">
@@ -121,21 +157,53 @@ const desc = `${AGENT.brand}（${AGENT.store}）目前在賣的房子，共 ${ca
   </div>
 
   <script>
+    import { emptySelection, hasSelection, matches } from '../lib/caseFilter';
+    import type { Flags, RoomKey, TypeKey } from '../lib/caseFilter';
     if (new URLSearchParams(location.search).get('act') === 'book') document.getElementById('bookNote')?.classList.remove('hidden');
     const grid = document.getElementById('grid')!;
     const cards = [...grid.querySelectorAll<HTMLElement>('.card')];
     const districtSel = document.getElementById('district') as HTMLSelectElement;
     const sortSel = document.getElementById('sort') as HTMLSelectElement;
-    const chips = [...document.querySelectorAll<HTMLElement>('#kindChips .chip')];
+    const chipBtns = [...document.querySelectorAll<HTMLElement>('#chips [data-g]')];
+    const advBtn = document.getElementById('advBtn')!;
+    const advPanel = document.getElementById('advPanel')!;
+    const clearBtn = document.getElementById('clearBtn')!;
     const count = document.getElementById('count')!;
     const empty = document.getElementById('empty')!;
     const ON = ['bg-slate-900', 'text-white', 'border-slate-900'];
     const OFF = ['bg-white', 'text-slate-700', 'border-slate-200'];
-    let kind = '';
+    const sel = emptySelection();
+    const flagsOfCard = (c: HTMLElement): Flags => {
+      const d = c.dataset;
+      return { rooms: d.rooms === '' ? null : Number(d.rooms), price: Number(d.price) > 0 ? Number(d.price) : null, parking: !!d.parking, elevator: !!d.elevator, apartment: !!d.apartment, townhouse: !!d.townhouse, factory: !!d.factory, land: !!d.land };
+    };
+    const cardFlags = new Map(cards.map((c) => [c, flagsOfCard(c)]));
+    const setOn = (el: HTMLElement, on: boolean) => {
+      el.classList.remove(...(on ? OFF : ON));
+      el.classList.add(...(on ? ON : OFF));
+    };
+    function toggle<T>(s: Set<T>, v: T) {
+      if (s.has(v)) s.delete(v);
+      else s.add(v);
+    }
+    // 按鈕的亮暗、「進階（N）」的數字、「清除」要不要出現
+    function paint() {
+      for (const b of chipBtns) {
+        const v = b.dataset.v!;
+        const on = b.dataset.g === 'rooms' ? sel.rooms.has(v as RoomKey) : b.dataset.g === 'parking' ? sel.parking : sel.types.has(v as TypeKey);
+        setOn(b, on);
+        b.setAttribute('aria-pressed', String(on));
+      }
+      const hasPrice = sel.priceMin !== null || sel.priceMax !== null;
+      const n = (['factory', 'land'] as TypeKey[]).filter((k) => sel.types.has(k)).length + (hasPrice ? 1 : 0);
+      advBtn.textContent = n ? `進階（${n}）` : '進階';
+      setOn(advBtn, n > 0);
+      clearBtn.classList.toggle('hidden', !hasSelection(sel));
+    }
     function apply() {
       let shown = 0;
       for (const c of cards) {
-        const ok = (!kind || c.dataset.kind === kind) && (!districtSel.value || c.dataset.district === districtSel.value);
+        const ok = matches(cardFlags.get(c)!, sel) && (!districtSel.value || c.dataset.district === districtSel.value);
         c.classList.toggle('hidden', !ok);
         if (ok) shown++;
       }
@@ -147,16 +215,42 @@ const desc = `${AGENT.brand}（${AGENT.store}）目前在賣的房子，共 ${ca
       count.textContent = `共 ${shown} 間`;
       empty.classList.toggle('hidden', shown > 0);
     }
-    chips.forEach((b) => b.addEventListener('click', () => {
-      kind = b.dataset.kind || '';
-      chips.forEach((x) => {
-        const on = x === b;
-        x.classList.remove(...(on ? OFF : ON));
-        x.classList.add(...(on ? ON : OFF));
-      });
+    chipBtns.forEach((b) => b.addEventListener('click', () => {
+      const v = b.dataset.v!;
+      if (b.dataset.g === 'rooms') toggle(sel.rooms, v as RoomKey);
+      else if (b.dataset.g === 'parking') sel.parking = !sel.parking;
+      else toggle(sel.types, v as TypeKey);
+      paint();
       apply();
     }));
+    advBtn.addEventListener('click', () => {
+      const open = advPanel.classList.toggle('hidden') === false;
+      advBtn.setAttribute('aria-expanded', String(open));
+    });
+    const priceMinSel = document.getElementById('priceMin') as HTMLSelectElement;
+    const priceMaxSel = document.getElementById('priceMax') as HTMLSelectElement;
+    const readPrice = () => {
+      sel.priceMin = priceMinSel.value ? Number(priceMinSel.value) : null;
+      sel.priceMax = priceMaxSel.value ? Number(priceMaxSel.value) : null;
+      paint();
+      apply();
+    };
+    priceMinSel.addEventListener('change', readPrice);
+    priceMaxSel.addEventListener('change', readPrice);
+    clearBtn.addEventListener('click', () => {
+      sel.rooms.clear();
+      sel.parking = false;
+      sel.types.clear();
+      priceMinSel.value = '';
+      priceMaxSel.value = '';
+      sel.priceMin = null;
+      sel.priceMax = null;
+      paint();
+      apply();
+    });
     districtSel.addEventListener('change', apply);
     sortSel.addEventListener('change', apply);
+    // 瀏覽器重新整理時會記住下拉選項，載入時先讀一次，畫面和篩選才會一致
+    readPrice();
   </script>
 </StoreLayout>
