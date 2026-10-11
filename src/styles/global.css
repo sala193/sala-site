@@ -95,6 +95,13 @@ a { color: inherit; text-decoration: none; }
 }
 .btn-gold:hover { box-shadow: 0 6px 16px rgba(185, 139, 62, 0.32); }
 
+/* LINE 按鈕：LINE 官方綠（跟社交小圖示、店鋪頁的 bg-line 同一個色） */
+.btn-line {
+  background: #06C755;
+  color: var(--white);
+}
+.btn-line:hover { background: #05B34C; box-shadow: 0 6px 16px rgba(6, 199, 85, 0.3); }
+
 /* ---------- Header ---------- */
 .header-utility {
   background: var(--ink);
@@ -420,14 +427,14 @@ blockquote.sala-says::before {
 
 /* ---------- CTA 區塊 ---------- */
 .cta-band {
-  background: var(--brick);
+  background: linear-gradient(160deg, var(--ink) 0%, var(--ink-soft) 100%); /* 跟首頁大圖同一組深藍黑，不用大片紅色 */
+  border-bottom: 3px solid var(--gold); /* 跟下面同色的頁尾分開 */
   color: var(--white);
   text-align: center;
   padding: 56px 0;
 }
 .cta-band h2 { color: var(--white); }
-.cta-band p { color: #F1DCDC; }
-.cta-band .btn-gold:hover { box-shadow: 0 6px 16px rgba(0,0,0,0.25); }
+.cta-band p { color: rgba(255, 255, 255, 0.82); }
 
 /* ---------- Footer ---------- */
 .site-footer {
