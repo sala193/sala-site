@@ -413,6 +413,13 @@ const updated = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei'
     </footer>
   </main>
 
+  <!-- 浮動的「更多物件」：停在底部按鈕列上方靠右，客人隨時可以一鍵去看店鋪全部銷售中的案子（存檔頁也有） -->
+  <div class="fixed inset-x-0 z-[45] pointer-events-none" style="bottom: calc(5.25rem + env(safe-area-inset-bottom))">
+    <div class="max-w-md mx-auto px-4 flex justify-end">
+      <a href="/cases" class="pointer-events-auto bg-[#B98B3E] hover:bg-[#a67b35] active:scale-95 text-[#1A1F2B] font-bold text-sm h-10 px-4 rounded-full flex items-center shadow-lg transition-transform">更多物件 ›</a>
+    </div>
+  </div>
+
   <!-- 底部固定大按鈕 -->
   <div class="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200/90 py-2.5 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
     <div class="max-w-md mx-auto flex items-center space-x-2.5" style="padding-bottom: env(safe-area-inset-bottom)">
