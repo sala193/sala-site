@@ -9,7 +9,7 @@ floors: 9
 parking_type: 平面式（56個）
 public_ratio: "33.21%"
 nearby_mrt: 台鐵鳳鳴車站（步行約1分鐘／100公尺）／三鶯線鶯桃福德站（2026年6月已通車）
-cover_image: /images/communities/senqing.jpg
+cover_image: /images/communities/senqing-cover.jpg
 author: 蔡莎拉
 date: 2026-10-12
 tags: ["鳳鳴", "森晴", "森聯", "電梯大樓", "鳳鳴重劃區"]
