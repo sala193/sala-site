@@ -28,6 +28,9 @@ const pageTitle = isHome
     <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
     <link rel="icon" href="/images/brand/favicon.png" />
 
+    <!-- Google Search Console 網站擁有權驗證（網址前置字元＋HTML 標記） -->
+    <meta name="google-site-verification" content="xOoVzcAbdLJ0XJTxLD0KUedB7twIQsmbSp2rTh_vG2g" />
+
     <!-- Open Graph -->
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
