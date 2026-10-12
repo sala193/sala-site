@@ -32,6 +32,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { parseDetail } from './parse-detail.mjs';
 import { youtubeIdFrom } from './youtube-id.mjs';
+import { carryOverTransfers, normalizeTransfers, pickTransferItems } from './transfers.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -351,6 +352,29 @@ async function main() {
     all = all.concat(listings);
     debugPages[store.shopCode] = firstHtml;
     await new Promise((r) => setTimeout(r, 1000)); // 換下一間店前也緩一下
+  }
+
+  // 「調件」案件(向永慶別間店調來的物件,清單在 src/data/transfers.json):
+  // 去受託店的公開列表頁,只挑出指定案號加進來。找不到＝官網已撤下,不加(後面的銷售頁存檔會接手)。
+  // 受託店整頁抓不到(網路、被擋)時沿用上一次的資料,避免誤判成撤下;這裡失敗不影響其他案件。
+  try {
+    const transfers = normalizeTransfers(
+      JSON.parse(readFileSync(new URL('../src/data/transfers.json', import.meta.url), 'utf-8'))
+    );
+    for (const t of transfers) {
+      try {
+        const { listings: shopListings } = await syncStore(t);
+        const hit = pickTransferItems(shopListings, t.caseNos);
+        console.log(`調件店 ${t.storeName}：指定 ${t.caseNos.length} 件,官網找到 ${hit.length} 件`);
+        all = all.concat(hit);
+      } catch (err) {
+        console.warn(`調件店 ${t.storeName} 抓取失敗,沿用上一次的資料:${err.message}`);
+        all = all.concat(carryOverTransfers(previous.values(), t.caseNos));
+      }
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+  } catch (err) {
+    console.warn(`讀取調件清單失敗(不影響其他案件):${err.message}`);
   }
 
   // 依 id+store 去重(理論上分頁不會重複,保險起見還是做一次)
