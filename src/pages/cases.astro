@@ -3,7 +3,7 @@
 // 放全店銷售中的案子（資料天天由永慶官網公開頁自動同步），每件都標蔡莎拉；沒有同業廣告。
 import StoreLayout from '../layouts/StoreLayout.astro';
 import Icon from '../components/store/Icon.astro';
-import { AGENT, allCases, photosOf, priceParts, districtOf, kindOf, roadOf, titleOf } from '../lib/store';
+import { AGENT, allCases, soldCases, photosOf, priceParts, districtOf, kindOf, roadOf, titleOf } from '../lib/store';
 import { AGE_BUCKETS, flagsOf, LIVING_AREAS, PRICE_STEPS, priceLabel } from '../lib/caseFilter';
 
 const cases = allCases().map((it) => {
@@ -25,6 +25,29 @@ const cases = allCases().map((it) => {
     cut: it.originalPrice && it.price && it.originalPrice > it.price ? it.originalPrice - it.price : 0,
     cover: photosOf(it)[0] || '',
     isNew: it.isNew,
+  };
+});
+
+// 最近成交（近 6 個月、最多 12 件）：照片、劃掉的開價＋「已成交」紅章（跟存檔頁同一個樣子）、區域路段、案名、型態坪數；
+// 不放成交價、不放成交日期，也不連到單案頁
+const soldList = soldCases().map((it) => {
+  const [pn, pu] = priceParts(it.price);
+  const name = titleOf(it);
+  const district = districtOf(it);
+  const road = roadOf(it);
+  const place = `${district}${road ? `・${road}` : ''}`;
+  const lineHref = (ask: string) => `https://line.me/R/oaMessage/${AGENT.lineId}/?${encodeURIComponent(ask)}`;
+  return {
+    id: it.id,
+    name,
+    place,
+    // 沒有開價（價格洽詢）就不放劃掉的數字，只蓋章
+    priceNum: it.price ? pn : '',
+    priceUnit: it.price ? pu : '',
+    cover: photosOf(it)[0] || '',
+    info: [it.type, it.rooms, (it.buildingPing || it.landPing) ? `${it.buildingPing || it.landPing} 坪` : ''].filter(Boolean).join('｜'),
+    buyHref: lineHref(`莎拉您好，我在店鋪看到已成交的「${name}」（${place}），想買類似的房子。`),
+    sellHref: lineHref(`莎拉您好，我在店鋪看到已成交的「${name}」（${place}），想請您幫我估價我的房子。`),
   };
 });
 
@@ -59,6 +82,16 @@ const desc = `${AGENT.brand}（${AGENT.store}）目前在賣的房子，共 ${ca
     </div>
   </header>
 
+  {soldList.length > 0 && (
+    <nav class="max-w-5xl mx-auto px-4 pt-3" aria-label="店鋪分頁">
+      <div class="flex gap-1.5 p-1 rounded-2xl bg-slate-200/70 max-w-md mx-auto" role="tablist">
+        <button type="button" id="tabSale" role="tab" data-tab="sale" aria-selected="true" class="tab flex-1 h-10 rounded-xl text-sm font-bold bg-slate-900 text-white">目前在售（{cases.length}）</button>
+        <button type="button" id="tabSold" role="tab" data-tab="sold" aria-selected="false" class="tab flex-1 h-10 rounded-xl text-sm font-bold text-slate-700">最近成交（{soldList.length}）</button>
+      </div>
+    </nav>
+  )}
+
+  <div id="panelSale">
   <section class="sticky top-0 z-30 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/70">
     <div class="max-w-5xl mx-auto px-4 pt-3 pb-2">
       <div class="space-y-2 pb-2" id="chips">
@@ -155,6 +188,52 @@ const desc = `${AGENT.brand}（${AGENT.store}）目前在賣的房子，共 ${ca
     </div>
     <p id="empty" class="hidden text-center text-slate-400 text-sm py-12">這個條件目前沒有房子，換個條件看看，或直接 LINE 我。</p>
   </main>
+  </div>
+
+  {soldList.length > 0 && (
+    <div id="panelSold" class="hidden">
+      <main class="max-w-5xl mx-auto px-4 py-4">
+        <div class="text-center mb-4">
+          <h2 class="text-lg font-black text-slate-900">最近成交的房子</h2>
+          <p class="text-sm text-slate-600 mt-1">近 6 個月已成交的案子。想買類似的，或想知道自己的房子行情，直接 LINE 我。</p>
+        </div>
+        <div id="soldGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {soldList.map((s, i) => (
+            <article class="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm" data-id={s.id}>
+              <div class="relative aspect-[4/3] overflow-hidden bg-slate-100 grid place-items-center text-slate-300 text-sm">
+                {s.cover ? <img src={s.cover} alt={s.name} class="w-full h-full object-cover" loading={i < 3 ? 'eager' : 'lazy'} decoding="async" /> : <span>照片整理中</span>}
+              </div>
+              <div class="p-4">
+                <div class="relative flex items-center h-14 mb-1">
+                  {s.priceNum && (
+                    <span class="relative inline-flex items-baseline gap-1 px-1">
+                      <span class="text-2xl font-black text-rose-600 tracking-tight">{s.priceNum}</span>
+                      <span class="text-sm font-extrabold text-rose-600">{s.priceUnit}</span>
+                      <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+                        <line x1="2" y1="2" x2="98" y2="38" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+                        <line x1="98" y1="2" x2="2" y2="38" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+                      </svg>
+                    </span>
+                  )}
+                  <span class="ml-4 -rotate-6 whitespace-nowrap border-4 border-rose-600 text-rose-600 bg-white/60 rounded-xl px-3 py-0.5 text-2xl font-black tracking-widest select-none">已成交</span>
+                </div>
+                <p class="text-xs text-slate-400 font-medium">{s.place}</p>
+                <h3 class="text-base font-bold text-slate-900 leading-snug mt-0.5 line-clamp-2">{s.name}</h3>
+                {s.info && <p class="text-xs text-slate-500 mt-1.5">{s.info}</p>}
+                <div class="grid grid-cols-2 gap-2 mt-3">
+                  <a href={s.buyHref} target="_blank" rel="noopener" class="bg-line text-white h-10 rounded-xl text-sm font-bold flex items-center justify-center">我想買類似的</a>
+                  <a href={s.sellHref} target="_blank" rel="noopener" class="h-10 rounded-xl text-sm font-bold flex items-center justify-center border border-slate-300 text-slate-800 bg-white">我想估價</a>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div class="text-center mt-6">
+          <a href={AGENT.line} target="_blank" rel="noopener" class="bg-line text-white inline-flex h-12 px-6 rounded-xl text-sm font-bold items-center justify-center">加 LINE 跟莎拉聊聊</a>
+        </div>
+      </main>
+    </div>
+  )}
 
   <footer class="max-w-5xl mx-auto px-4 pb-6 text-center text-xs text-slate-400 space-y-1">
     <div>{AGENT.company}｜{AGENT.store}</div>
@@ -351,5 +430,33 @@ const desc = `${AGENT.brand}（${AGENT.store}）目前在賣的房子，共 ${ca
 
     // 瀏覽器重新整理時會記住下拉選項，載入時先讀一次，畫面和篩選才會一致
     readPrice();
+  </script>
+
+  <script>
+    // 「目前在售｜最近成交」兩個分頁：網址 #sold 直接開最近成交，方便莎拉把連結傳給客人
+    const tabs = [...document.querySelectorAll<HTMLElement>('.tab')];
+    const panelSale = document.getElementById('panelSale');
+    const panelSold = document.getElementById('panelSold');
+    if (tabs.length && panelSale && panelSold) {
+      const ON = ['bg-slate-900', 'text-white'];
+      const OFF = ['text-slate-700'];
+      const show = (which: 'sale' | 'sold') => {
+        panelSale.classList.toggle('hidden', which !== 'sale');
+        panelSold.classList.toggle('hidden', which !== 'sold');
+        for (const t of tabs) {
+          const on = t.dataset.tab === which;
+          t.classList.remove(...(on ? OFF : ON));
+          t.classList.add(...(on ? ON : OFF));
+          t.setAttribute('aria-selected', String(on));
+        }
+      };
+      tabs.forEach((t) => t.addEventListener('click', () => {
+        const which = t.dataset.tab === 'sold' ? 'sold' : 'sale';
+        history.replaceState(null, '', which === 'sold' ? '#sold' : location.pathname + location.search);
+        show(which);
+      }));
+      window.addEventListener('hashchange', () => show(location.hash === '#sold' ? 'sold' : 'sale'));
+      if (location.hash === '#sold') show('sold');
+    }
   </script>
 </StoreLayout>

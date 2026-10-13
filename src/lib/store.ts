@@ -5,6 +5,7 @@ import manifestSb from '../data/photo-manifest-sb.json';
 import overrides from '../data/overrides.json';
 import archive from '../data/archive.json';
 import archiveStatus from '../data/archive-status.json';
+import sold from '../data/sold.json';
 import { cleanTitle } from './notes';
 
 export { AGENT } from './agent';
@@ -43,6 +44,14 @@ export function archiveLabel(id: string): '已成交' | '已下架' {
 
 // 後台狀態是「已成交」的官網案號（每天同步 archive-status.json）
 export const closedIds = new Set(Object.entries(archiveStatus as Record<string, string>).filter(([, s]) => s === '已成交').map(([id]) => id));
+
+/** 最近成交：近 6 個月、最多 12 件（每天同步 sold.json，已依成交日新到舊排好；找不到官網資料的略過） */
+export function soldCases(): Item[] {
+  const ids: string[] = Array.isArray(sold) ? (sold as string[]) : [];
+  const pool = new Map<string, Item>();
+  for (const it of archivedCases()) pool.set(it.id, it);
+  return ids.map((id) => pool.get(id)).filter((it): it is Item => !!it);
+}
 
 /** 全部案件（同一個官網 id 只留一筆；後台已成交的不放進店鋪清單） */
 export function allCases(): Item[] {
