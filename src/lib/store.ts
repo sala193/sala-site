@@ -6,6 +6,7 @@ import overrides from '../data/overrides.json';
 import archive from '../data/archive.json';
 import archiveStatus from '../data/archive-status.json';
 import sold from '../data/sold.json';
+import hidden from '../data/hidden.json';
 import { cleanTitle } from './notes';
 
 export { AGENT } from './agent';
@@ -17,6 +18,9 @@ export const PHOTO_BASE = 'https://pub-61c50068c9924c239dfb2d0e0ec9bbd2.r2.dev/c
 export const SB_PHOTO_BASE = 'https://dlfleszjcfeickibjcee.supabase.co/storage/v1/object/public/case-photos';
 
 type Item = (typeof listings)[number] & { detail?: Record<string, any> };
+
+// 屋主不要任何網路銷售廣告的案件（莎拉 2026-10-14）：店鋪清單、單案頁、存檔頁、最近成交、類似的房子都不放；只留後台
+export const hiddenIds = new Set(Object.keys(hidden as Record<string, string>));
 
 /** 照片優先序（目前實作第 3 層：圖庫的官網備份；沒有備份就直接用官網網址） */
 export function photosOf(item: Item): string[] {
@@ -34,7 +38,7 @@ export function archivedCases(): Item[] {
   for (const it of Object.values(archive as Record<string, Item>)) if (!live.has(it.id)) out.set(it.id, it);
   // 後台標了「已成交」（莎拉寫了成交價＝已簽約進代書）：官網還沒撤下也不用等，直接當存檔頁、不進店鋪清單
   for (const it of listings as Item[]) if (closedIds.has(it.id) && !out.has(it.id)) out.set(it.id, it);
-  return [...out.values()];
+  return [...out.values()].filter((it) => !hiddenIds.has(it.id));
 }
 
 /** 存檔頁寫「已成交」還是「已下架」：只有後台標「已成交」才寫已成交（每天同步，頁面上也會即時再查一次） */
@@ -56,7 +60,7 @@ export function soldCases(): Item[] {
 /** 全部案件（同一個官網 id 只留一筆；後台已成交的不放進店鋪清單） */
 export function allCases(): Item[] {
   const byId = new Map<string, Item>();
-  for (const it of listings as Item[]) if (!byId.has(it.id) && !closedIds.has(it.id)) byId.set(it.id, it);
+  for (const it of listings as Item[]) if (!byId.has(it.id) && !closedIds.has(it.id) && !hiddenIds.has(it.id)) byId.set(it.id, it);
   return [...byId.values()];
 }
 
