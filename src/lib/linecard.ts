@@ -127,8 +127,8 @@ export function caseBubble(c: CardCase, o: BuildOpts) {
       type: 'box',
       layout: 'baseline',
       contents: [
-        text(c.priceText.replace(/\s*萬$/, ''), { weight: 'bold', size: 'xxl', color: RED, flex: 0 }),
-        text(' 萬', { weight: 'bold', size: 'sm', color: RED, flex: 0 }),
+        text(c.priceText.replace(/\s*[萬億]$/, ''), { weight: 'bold', size: 'xxl', color: RED, flex: 0 }),
+        text(c.priceText.endsWith('億') ? ' 億' : ' 萬', { weight: 'bold', size: 'sm', color: RED, flex: 0 }),
         ...(c.originalPrice && c.price && c.originalPrice > c.price
           ? [text(`  原 ${c.originalPrice.toLocaleString('en-US')}`, { size: 'xxs', color: '#94a3b8', decoration: 'line-through', flex: 0 })]
           : []),

@@ -81,7 +81,7 @@ export function kindOf(item: Item): '住宅' | '透天' | '店面辦公' | '廠�
 
 export function priceText(p?: number | null): string {
   if (!p) return '價格洽詢';
-  return p >= 10000 ? `${(p / 10000).toFixed(2).replace(/\.?0+$/, '')} 億` : `${p.toLocaleString('en-US')} 萬`;
+  return p >= 10000 ? `${String(Number((p / 10000).toFixed(4)))} 億` : `${p.toLocaleString('en-US')} 萬`;
 }
 
 /** 路段：去掉「縣市＋區」，只留路名（地址本來就只到路段，不放門牌） */
@@ -99,11 +99,11 @@ export function titleOf(item: Item): string {
   return cleanTitle(raw);
 }
 
-/** 價格拆成大字數字與單位，例如 1598 → ['1,598','萬']，12500 → ['1.25','億'] */
+/** 價格拆成大字數字與單位，例如 1598 → ['1,598','萬']，11190 → ['1.119','億'] */
 export function priceParts(p?: number | null): [string, string] {
   if (!p) return ['價格洽詢', ''];
   return p >= 10000
-    ? [(p / 10000).toFixed(2).replace(/\.?0+$/, ''), '億']
+    ? [String(Number((p / 10000).toFixed(4))), '億']
     : [p.toLocaleString('en-US'), '萬'];
 }
 
