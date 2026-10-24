@@ -125,6 +125,5 @@ tags: ["鳳鳴", "森晴", "森聯", "電梯大樓", "鳳鳴重劃區"]
 </p>
 
 <p style="font-size: 0.82rem; color: var(--text-soft); margin-top: 0.6em;">
-【圖文版權所有，請勿任意轉載】<br />
 【物件距離以 Google 地圖實測為準，依交通狀況時間略有不同】
 </p>

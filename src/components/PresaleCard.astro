@@ -1,0 +1,38 @@
+---
+interface Props {
+  slug: string;
+  project_name: string;
+  region: string;
+  sale_status: string;
+  price_per_ping: string;
+  total_price: string;
+  area_range?: string;
+  room_types?: string;
+  transit?: string;
+  tags?: string[];
+}
+const { slug, project_name, region, sale_status, price_per_ping, total_price, area_range, room_types, transit, tags = [] } = Astro.props;
+const dash = '—';
+const [badge, ...stateRest] = sale_status.split('・');
+---
+<a class="presale-card" href={`/presales/${slug}`}>
+  <div class="presale-head">
+    <h3>{project_name}</h3>
+    <span class="presale-badge">{badge}</span>
+  </div>
+  <p class="presale-loc">📍 新北市 鶯歌區{region ? `・${region}` : ''}</p>
+  <dl class="presale-facts">
+    <div><dt>單價（每坪）</dt><dd>{price_per_ping}</dd></div>
+    <div><dt>總價起</dt><dd>{total_price}</dd></div>
+    <div><dt>坪數</dt><dd>{area_range ?? dash}</dd></div>
+    <div><dt>房型</dt><dd>{room_types ?? dash}</dd></div>
+  </dl>
+  {stateRest.length > 0 && <p class="presale-state">{stateRest.join('・')}</p>}
+  {transit && <p class="presale-transit">🚉 {transit}</p>}
+  {tags.length > 0 && (
+    <div class="presale-tags">
+      {tags.map((t) => <span>{t}</span>)}
+    </div>
+  )}
+  <span class="card-link">看這個案子 →</span>
+</a>

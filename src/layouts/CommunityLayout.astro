@@ -1,5 +1,6 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import { SOURCE_NOTICE } from '../lib/pageNotice';
 
 interface Props {
   title: string;
@@ -65,6 +66,7 @@ const placeSchema = {
           撰文：{author} ／ 更新日期：{date.toLocaleDateString('zh-TW')}
         </p>
         <slot />
+        <p class="page-notice">{SOURCE_NOTICE}</p>
       </div>
 
       <aside>

@@ -478,3 +478,55 @@ blockquote.sala-says::before {
   text-align: center;
 }
 .stub p { color: var(--text-soft); max-width: 50ch; margin: 0 auto 26px; }
+
+/* ---------- 鳳鳴預售屋卡片 ---------- */
+.presale-grid { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 860px) { .presale-grid { grid-template-columns: 1fr; } }
+.presale-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+}
+.presale-card:hover { box-shadow: 0 8px 20px rgba(26, 31, 43, 0.1); }
+.presale-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.presale-head h3 { margin: 0; font-size: 1.3rem; }
+.presale-badge {
+  flex: none;
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: #fbefd0;
+  color: #8a5a00;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.presale-loc { margin: 0; color: var(--text-soft); font-size: 0.92rem; }
+.presale-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 10px;
+  margin: 0;
+  padding: 14px;
+  background: var(--paper);
+  border-radius: 10px;
+  text-align: center;
+}
+.presale-facts dt { font-size: 0.8rem; color: var(--text-soft); }
+.presale-facts dd { margin: 2px 0 0; font-weight: 700; font-size: 1.02rem; }
+.presale-state { margin: 0; font-size: 0.85rem; color: var(--brick); font-weight: 700; }
+.presale-transit { margin: 0; color: var(--text-soft); font-size: 0.92rem; }
+.presale-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.presale-tags span {
+  padding: 2px 10px;
+  border-radius: 6px;
+  background: var(--paper-deep);
+  font-size: 0.82rem;
+  color: var(--text-soft);
+}
+
+/* 頁尾聲明（免責、請勿轉載、資料來源） */
+.page-notice { font-size: 0.82rem; color: var(--text-soft); margin: 0.8em 0 0; }

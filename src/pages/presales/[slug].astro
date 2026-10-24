@@ -1,0 +1,19 @@
+---
+import { getCollection } from 'astro:content';
+import PresaleLayout from '../../layouts/PresaleLayout.astro';
+
+export async function getStaticPaths() {
+  const items = await getCollection('presales');
+  return items.map((entry) => ({
+    params: { slug: entry.slug },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await entry.render();
+const d = entry.data;
+---
+<PresaleLayout {...d}>
+  <Content />
+</PresaleLayout>

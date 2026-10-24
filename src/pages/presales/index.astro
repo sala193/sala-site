@@ -1,0 +1,41 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PresaleCard from '../../components/PresaleCard.astro';
+import { getCollection } from 'astro:content';
+import { PRESALE_NOTICE, SOURCE_NOTICE } from '../../lib/pageNotice';
+
+const all = (await getCollection('presales')).sort((a, b) => a.data.order - b.data.order);
+---
+<BaseLayout title="鳳鳴預售屋｜預售新案資訊整理" description="蔡莎拉整理的鶯歌鳳鳴重劃區預售新案資訊：建商、營造、建築師、規劃公設、單價與交屋時間，每一項都標來源與查詢日期。">
+  <section class="section">
+    <div class="container">
+      <h1>鳳鳴預售屋</h1>
+      <p class="section-lead">
+        鶯歌鳳鳴重劃區的預售新案，莎拉一個一個整理：建商、營造、建築師、規劃公設、單價與交屋時間，每一項都標來源和查詢日期。查不到的就留空，不亂猜。
+      </p>
+
+      <div class="grid presale-grid">
+        {all.map((c) => (
+          <PresaleCard
+            slug={c.slug}
+            project_name={c.data.project_name}
+            region={c.data.region}
+            sale_status={c.data.sale_status}
+            price_per_ping={c.data.price_per_ping}
+            total_price={c.data.total_price}
+            area_range={c.data.area_range}
+            room_types={c.data.room_types}
+            transit={c.data.transit}
+            tags={c.data.tags}
+          />
+        ))}
+      </div>
+
+      {all.length === 0 && <p style="color: var(--text-soft);">預售新案整理中，敬請期待。</p>}
+
+      <p class="page-notice" style="margin-top: 32px;">{PRESALE_NOTICE}</p>
+      <p class="page-notice">{SOURCE_NOTICE}</p>
+      <p class="page-notice">預售案由建商與代銷公司銷售，不是莎拉受託銷售的物件。想比較預售新案和鳳鳴成屋，歡迎<a href="https://line.me/ti/p/@saLa193" target="_blank" rel="noopener">加 LINE 找莎拉姐聊聊</a>。</p>
+    </div>
+  </section>
+</BaseLayout>

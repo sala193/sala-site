@@ -1,0 +1,105 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import { PRESALE_NOTICE, SOURCE_NOTICE } from '../lib/pageNotice';
+
+interface Props {
+  title: string;
+  project_name: string;
+  region: string;
+  sale_status: string;
+  developer?: string;
+  builder?: string;
+  architect?: string;
+  planner?: string;
+  address?: string;
+  price_per_ping: string;
+  total_price: string;
+  area_range?: string;
+  room_types?: string;
+  units?: string;
+  floors?: string;
+  parking?: string;
+  public_ratio?: string;
+  base_area?: string;
+  delivery?: string;
+  orientation?: string;
+  reception?: string;
+  source: string;
+  author?: string;
+  date: Date;
+}
+
+const p = Astro.props;
+const rows: [string, string | undefined][] = [
+  ['銷售狀態', p.sale_status],
+  ['投資建設', p.developer],
+  ['營造', p.builder],
+  ['建築師', p.architect],
+  ['企劃銷售', p.planner],
+  ['地點', p.address],
+  ['單價（每坪）', p.price_per_ping],
+  ['總價起', p.total_price],
+  ['坪數', p.area_range],
+  ['房型', p.room_types],
+  ['戶數', p.units],
+  ['樓層', p.floors],
+  ['車位', p.parking],
+  ['公設比', p.public_ratio],
+  ['基地面積', p.base_area],
+  ['座向', p.orientation],
+  ['交屋時間', p.delivery],
+  ['接待會館', p.reception],
+];
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'Place',
+  name: p.project_name,
+  address: p.address,
+  additionalProperty: rows
+    .filter(([, v]) => v && v !== '價格待定')
+    .map(([k, v]) => ({ '@type': 'PropertyValue', name: k, value: v })),
+};
+---
+<BaseLayout title={p.title} description={p.title}>
+  <article class="section">
+    <div class="container article-layout">
+      <div class="prose">
+        <p class="card-region">{p.region}．預售新案資訊</p>
+        <h1>{p.title}</h1>
+        <p style="color: var(--text-soft); font-size: 0.9rem; margin-top: -0.6em;">
+          整理：{p.author ?? '蔡莎拉'} ／ 更新日期：{p.date.toLocaleDateString('zh-TW')}
+        </p>
+        <slot />
+        <p class="page-notice">{PRESALE_NOTICE}</p>
+        <p class="page-notice">{SOURCE_NOTICE}</p>
+        <p class="page-notice">資料來源：{p.source}</p>
+      </div>
+
+      <aside>
+        <div class="info-card">
+          <h3 style="margin-bottom: 14px;">{p.project_name}．案件資訊</h3>
+          <dl>
+            {rows.filter(([, v]) => v).map(([k, v]) => (
+              <div class="row"><dt>{k}</dt><dd>{v}</dd></div>
+            ))}
+          </dl>
+          <p style="font-size: 0.8rem; color: var(--text-soft); margin-top: 10px;">{PRESALE_NOTICE}</p>
+        </div>
+
+        <div class="info-card" style="margin-top: 20px; text-align: center;">
+          <p style="margin-bottom: 14px; font-weight: 700;">想去接待中心看看？</p>
+          <a class="btn btn-line" style="width: 100%; justify-content: center; margin-bottom: 10px;"
+             href="https://line.me/ti/p/@saLa193" target="_blank" rel="noopener">
+            📍 我想了解{p.project_name}
+          </a>
+          <a class="btn btn-outline" style="width: 100%; justify-content: center;" href="/presales">
+            看其它預售新案
+          </a>
+        </div>
+      </aside>
+    </div>
+  </article>
+
+  <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+</BaseLayout>
