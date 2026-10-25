@@ -71,6 +71,17 @@ tags: ["鳳鳴", "森睦", "森聯", "電梯大樓", "鳳鳴重劃區", "成屋"
 
 ## 3. 我到現場看到的
 
+<figure style="margin:1.2em 0;">
+<img src="/images/communities/senmu/elevator.jpg" alt="森睦 1 樓電梯間" loading="lazy" style="width:100%;height:auto;border-radius:8px;" />
+<figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜電梯間，201 戶共用 4 部 15 人座電梯</figcaption>
+</figure>
+
+<figure style="margin:1.2em 0;">
+<img src="/images/communities/senmu/lounge.jpg" alt="森睦挑高多功能交誼廳" loading="lazy" style="width:100%;height:auto;border-radius:8px;" />
+<figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜挑高的大型多功能交誼廳，平常接待訪客，也可以當區權人會議的場所</figcaption>
+</figure>
+
+
 | 樓層 | 有什麼 |
 |---|---|
 | **1 樓** | 警衛登記處左邊：信箱與包裹集中區<br>右邊：沙發區，讓等候的客人休息<br>往裡走：飯店級的梯間，4 部 15 人座電梯（201 戶共用）<br>電梯旁：挑高的大型多功能交誼廳，平常接待訪客，也可以當區權人會議場所，內有吧台區 |
@@ -78,6 +89,21 @@ tags: ["鳳鳴", "森睦", "森聯", "電梯大樓", "鳳鳴重劃區", "成屋"
 | **3 樓** | 大型餐廳空間，可以辦外燴（叫到府的自助餐）和活動<br>有中島吧台區，連接戶外超大露台 |
 | **B1** | 獨立垃圾集中室：24 小時開 22 度冷氣防臭，配有冷藏廚餘機<br>資源回收區 |
 
+
+<figure style="margin:1.2em 0;">
+<img src="/images/communities/senmu/trash.jpg" alt="森睦 B1 獨立垃圾集中室" loading="lazy" style="width:100%;height:auto;border-radius:8px;" />
+<figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜B1 獨立垃圾集中室，旁邊就是廚餘回收機</figcaption>
+</figure>
+
+<figure style="margin:1.2em 0;">
+<img src="/images/communities/senmu/recycle.jpg" alt="森睦 B1 資源回收區" loading="lazy" style="width:100%;height:auto;border-radius:8px;" />
+<figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜B1 資源回收區，分類回收一目了然；旁邊是自行車停放區</figcaption>
+</figure>
+
+<figure style="margin:1.2em 0;">
+<img src="/images/communities/senmu/ramp.jpg" alt="森睦坡道車道入口" loading="lazy" style="width:100%;height:auto;border-radius:8px;" />
+<figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜坡道車道入口，車道進出單純</figcaption>
+</figure>
 公設怎麼使用，要看社區管委會討論的規章，帶看時我陪你一起看。
 
 ## 4. 實價登錄行情
