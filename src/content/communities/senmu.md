@@ -102,19 +102,32 @@ tags: ["鳳鳴", "森睦", "森聯", "電梯大樓", "鳳鳴重劃區", "成屋"
 | **B1** | 獨立垃圾集中室：24 小時開 22 度冷氣防臭，配有冷藏廚餘機<br>資源回收區 |
 
 
+
+
+
 <figure style="margin:1.2em 0;">
 <img src="/images/communities/senmu/trash.jpg" alt="森睦 B1 獨立垃圾集中室" loading="lazy" style="width:100%;height:auto;border-radius:8px;" />
-<figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜B1 獨立垃圾集中室，旁邊就是廚餘回收機</figcaption>
+<figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜B1 獨立垃圾集中室</figcaption>
+</figure>
+
+<figure style="margin:1.2em 0;">
+<img src="/images/communities/senmu/foodwaste.jpg" alt="森睦 B1 廚餘回收機" loading="lazy" style="width:100%;height:auto;border-radius:8px;" />
+<figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜B1 廚餘回收機，外型像冷藏櫃</figcaption>
 </figure>
 
 <figure style="margin:1.2em 0;">
 <img src="/images/communities/senmu/recycle.jpg" alt="森睦 B1 資源回收區" loading="lazy" style="width:100%;height:auto;border-radius:8px;" />
-<figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜B1 資源回收區，分類回收一目了然；旁邊是自行車停放區</figcaption>
+<figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜B1 資源回收區，分類回收一目了然</figcaption>
+</figure>
+
+<figure style="margin:1.2em 0;">
+<img src="/images/communities/senmu/bikes.jpg" alt="森睦 B1 自行車停放區" loading="lazy" style="width:100%;height:auto;border-radius:8px;" />
+<figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜B1 自行車停放區，車位格線清楚</figcaption>
 </figure>
 
 <figure style="margin:1.2em 0;">
 <img src="/images/communities/senmu/ramp.jpg" alt="森睦坡道車道入口" loading="lazy" style="width:100%;height:auto;border-radius:8px;" />
-<figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜坡道車道入口，車道進出單純</figcaption>
+<figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜坡道車道入口</figcaption>
 </figure>
 公設怎麼使用，要看社區管委會討論的規章，帶看時我陪你一起看。
 
