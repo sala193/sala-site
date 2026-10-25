@@ -378,6 +378,33 @@ blockquote.sala-says::before {
 }
 .prose h2 { margin-top: 1.6em; }
 .prose img { max-width: 100%; border-radius: var(--radius); }
+/* 社區文章表格：表頭色塊、每列分隔線、第一欄不換行直排 */
+.article-layout .prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+.article-layout .prose th {
+  background: var(--paper-deep);
+  color: var(--ink);
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px solid var(--gold);
+}
+.article-layout .prose td {
+  padding: 12px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+.article-layout .prose tbody tr:nth-child(even) td { background: rgba(239, 232, 219, 0.45); }
+.article-layout .prose td:first-child,
+.article-layout .prose th:first-child {
+  white-space: nowrap;
+  font-weight: 700;
+  color: var(--brick);
+}
 /* 社區文章：每個大標題一塊深色色塊，方便分段閱讀 */
 .article-layout .prose h2 {
   background: var(--ink);
