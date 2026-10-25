@@ -17,7 +17,7 @@ tags: ["鳳鳴", "森睦", "森聯", "電梯大樓", "鳳鳴重劃區", "成屋"
 ---
 
 成家本該是開心的好事；我是那個願意為你處理繁瑣細節的莎拉姐。
-在鶯歌與鳳鳴深耕近 20 年，我看著這裡從重劃配地一路長出新大樓。
+森睦我走過、拍過，從 1 樓大門一路走到 B1，今天就帶你從頭逛一圈。
 
 <p style="font-size:0.85rem;color:var(--text-soft);">關鍵字：森睦、鶯歌森睦、鳳鳴重劃區森睦、森睦可以買嗎、森睦看屋重點</p>
 
@@ -25,31 +25,27 @@ tags: ["鳳鳴", "森睦", "森聯", "電梯大樓", "鳳鳴重劃區", "成屋"
 
 - **屋齡約 2 年**的新成屋，**1 棟、201 戶**
 - **車位 1 比 1，戶戶有車位**，全部是平面／坡道平面，汽車機車分道
-- **公設在 2、3 樓**：健身房、KTV、棋藝室、撞球台、餐廳空間、戶外大露台
 - **201 戶共用 4 部 15 人座電梯**，飯店級的梯間
+- **公設在 2、3 樓**：健身房、KTV、棋藝室、撞球台、餐廳空間、戶外大露台
 - **公設比約 35.2～35.5%**（我用謄本算的，已扣除車位）
 - **管理費約每坪 80 元**（我推算的，不是管委會公告）
 - 走路 13～15 分鐘到捷運、學校、火車站，**騎微笑單車只要 3～4 分鐘**
 
 ## 莎拉說：森睦的公設與管理費
 
-<blockquote class="sala-says">
-<p>森睦是大型社區，公設是目前鳳鳴最完善的，公設非常多樣，管理費分攤下來很合理。</p>
-</blockquote>
+> 森睦是大型社區，公設是目前鳳鳴最完善的，公設非常多樣，管理費分攤下來很合理。
 
 看你更重視什麼，再決定適不適合。
 
----
-
 ## 1. 為什麼鳳鳴重劃區的森睦討論度這麼高？
+
+很多客人會直接問我「森睦可以買嗎？」。我的回答都從這 5 件事開始：
 
 - **新**：屋齡約 2 年，不用等交屋，進來就看得到真實屋況
 - **大**：1 棟 201 戶的大型社區，公設做得齊
 - **多**：2 樓、3 樓的包間和場地，從健身房、KTV 到餐廳空間
 - **有車位**：車位 1 比 1，汽車機車分道
 - **進出順**：4 部 15 人座電梯，飯店級的梯間
-
-很多客人會直接問我「森睦可以買嗎？」。看你更重視什麼，再決定適不適合，下面我一項一項帶你看。
 
 ## 2. 森睦基本資料
 
@@ -76,60 +72,80 @@ tags: ["鳳鳴", "森睦", "森聯", "電梯大樓", "鳳鳴重劃區", "成屋"
 | 鳳鳴國小 | 13 分（1.0 公里） | **3 分** |
 | 鳳鳴火車站 | 15 分（1.1 公里） | **4 分** |
 
-走路超過 10 分鐘的，騎微笑單車更輕鬆。
+走路超過 10 分鐘的，騎微笑單車更輕鬆。社區附近的微笑單車站有：鳳七鶯歌路口、鳳福公園、鳳吉四鳳七路口、鳳五路122號前、臺鐵鳳鳴站。鳳鳴有很多微笑單車站，是日常通勤的一大優勢。
 
-附近的微笑單車站：鳳七鶯歌路口、鳳福公園、鳳吉四鳳七路口、鳳五路122號前、臺鐵鳳鳴站。
-鳳鳴有很多微笑單車站，是日常通勤的一大優勢。
+## 4. 跟我走進森睦：從大門到 B1
 
-## 4. 我到現場看到的森睦公設
+### 1 樓：信箱、沙發區、電梯間、交誼廳
+
+一進大門，警衛登記處的**左邊是信箱和包裹集中區**，**右邊是沙發區**，讓等候的客人休息。往裡走，就是 **4 部 15 人座的電梯間**，201 戶共用，整個梯間走飯店風。
 
 <figure style="margin:1.2em 0;">
 <img src="/images/communities/senmu/elevator.jpg" alt="森睦 1 樓電梯間" loading="lazy" style="width:100%;height:auto;border-radius:8px;" />
 <figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜電梯間，201 戶共用 4 部 15 人座電梯</figcaption>
 </figure>
 
+電梯間旁邊是**挑高的大型多功能交誼廳**，平常可以接待訪客，也可以當區權人會議的場所，裡面還有吧台區。
+
 <figure style="margin:1.2em 0;">
 <img src="/images/communities/senmu/lounge.jpg" alt="森睦挑高多功能交誼廳" loading="lazy" style="width:100%;height:auto;border-radius:8px;" />
 <figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜挑高的大型多功能交誼廳，平常接待訪客，也可以當區權人會議的場所</figcaption>
 </figure>
 
+### 2 樓：健身、KTV、棋藝、撞球、兒童遊戲
 
-| 樓層 | 有什麼 |
+| 空間 | 內容 |
 |---|---|
-| **1 樓** | 警衛登記處左邊：信箱與包裹集中區<br>右邊：沙發區，讓等候的客人休息<br>往裡走：飯店級的梯間，4 部 15 人座電梯（201 戶共用）<br>電梯旁：挑高的大型多功能交誼廳，平常接待訪客，也可以當區權人會議場所，內有吧台區 |
-| **2 樓** | 健身房、棋藝室、KTV、影音室、兒童遊戲區<br>2 台籃球機、撞球台 |
-| **3 樓** | 大型餐廳空間，可以辦外燴（叫到府的自助餐）和活動<br>有中島吧台區，連接戶外超大露台 |
-| **B1** | 獨立垃圾集中室：24 小時開 22 度冷氣防臭，配有冷藏廚餘機<br>資源回收區 |
+| 健身房 | 運動不用出社區 |
+| KTV、影音室 | 唱歌、看影片 |
+| 棋藝室 | 下棋、聚會 |
+| 兒童遊戲區 | 孩子放電的地方 |
+| 籃球機、撞球台 | 2 台籃球機，加一張撞球台 |
 
+### 3 樓：餐廳空間和戶外大露台
 
+3 樓是**大型餐廳空間**，有中島吧台區，連接戶外**超大露台**。想辦活動、請客，可以叫到府的外燴自助餐，場地夠大。
 
+公設怎麼使用，要看社區管委會討論的規章，帶看時我陪你一起看。
 
+### B1：垃圾、回收、自行車和車道
+
+很多人買房子不太看 B1，但我覺得**每天都用得到**，所以我也拍了。
+
+**垃圾怎麼丟：**獨立的垃圾集中室，24 小時開 22 度冷氣防臭。
 
 <figure style="margin:1.2em 0;">
 <img src="/images/communities/senmu/trash.jpg" alt="森睦 B1 獨立垃圾集中室" loading="lazy" style="width:100%;height:auto;border-radius:8px;" />
 <figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜B1 獨立垃圾集中室</figcaption>
 </figure>
 
+**廚餘：**有冷藏廚餘機，外型像一台冷藏櫃。
+
 <figure style="margin:1.2em 0;">
 <img src="/images/communities/senmu/foodwaste.jpg" alt="森睦 B1 廚餘回收機" loading="lazy" style="width:100%;height:auto;border-radius:8px;" />
 <figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜B1 廚餘回收機，外型像冷藏櫃</figcaption>
 </figure>
+
+**資源回收：**回收區就在停車場旁邊，分類清楚。
 
 <figure style="margin:1.2em 0;">
 <img src="/images/communities/senmu/recycle.jpg" alt="森睦 B1 資源回收區" loading="lazy" style="width:100%;height:auto;border-radius:8px;" />
 <figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜B1 資源回收區，分類回收一目了然</figcaption>
 </figure>
 
+**自行車：**B1 還有專門的自行車停放區，車位格線清楚，配合微笑單車通勤很方便。
+
 <figure style="margin:1.2em 0;">
 <img src="/images/communities/senmu/bikes.jpg" alt="森睦 B1 自行車停放區" loading="lazy" style="width:100%;height:auto;border-radius:8px;" />
 <figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜B1 自行車停放區，車位格線清楚</figcaption>
 </figure>
 
+**車道：**汽車、機車分道，坡道平面車位，進出單純。
+
 <figure style="margin:1.2em 0;">
 <img src="/images/communities/senmu/ramp.jpg" alt="森睦坡道車道入口" loading="lazy" style="width:100%;height:auto;border-radius:8px;" />
 <figcaption style="font-size:0.88rem;color:var(--text-soft);margin-top:0.4em;">莎拉拍攝｜坡道車道入口</figcaption>
 </figure>
-公設怎麼使用，要看社區管委會討論的規章，帶看時我陪你一起看。
 
 ## 5. 森睦實價登錄行情
 
