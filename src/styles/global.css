@@ -378,10 +378,19 @@ blockquote.sala-says::before {
 }
 .prose h2 { margin-top: 1.6em; }
 .prose img { max-width: 100%; border-radius: var(--radius); }
+/* 社區文章：每個大標題一塊深色色塊，方便分段閱讀 */
+.article-layout .prose h2 {
+  background: var(--ink);
+  color: var(--white);
+  border-left: 6px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  margin-top: 2em;
+  font-size: 1.3rem;
+}
 .community-cover {
   width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
+  height: auto;
   border-radius: var(--radius);
   margin-bottom: 20px;
   display: block;
