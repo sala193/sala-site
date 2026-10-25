@@ -1,0 +1,16 @@
+{
+  "森睦": {
+    "statsName": "森聯LIFE森睦",
+    "households": 201,
+    "ageBase": 2.3,
+    "ageBaseDate": "2026-10-22",
+    "lvr": {
+      "city": "f",
+      "district": "鶯歌區",
+      "ranges": [
+        { "road": "鳳福路", "lo": 2, "hi": 40 },
+        { "road": "鳳七路", "lo": 300, "hi": 310 }
+      ]
+    }
+  }
+}

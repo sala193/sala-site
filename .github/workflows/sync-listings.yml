@@ -27,11 +27,14 @@ jobs:
       - name: 抓取莎拉勾選的特色亮點與定稿金句
         run: node scripts/sync-appeal.mjs
 
+      - name: 算各社區近 12 個月實價登錄成交筆數（內政部公開檔；失敗就保留舊檔）
+        run: python3 scripts/sync-lvr-counts.py || echo "實價登錄這次沒算成，保留舊檔"
+
       - name: 提交並推送(若有變更)
         run: |
           git config user.name "sala-listings-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add src/data/listings.json src/data/appeal.json src/data/copy.json src/data/notes.json src/data/photo-manifest-sb.json src/data/archive.json src/data/archive-status.json src/data/sold.json .sync-debug 2>/dev/null || git add src/data/listings.json src/data/appeal.json src/data/copy.json src/data/notes.json src/data/photo-manifest-sb.json src/data/archive.json src/data/archive-status.json src/data/sold.json
+          git add src/data/listings.json src/data/appeal.json src/data/copy.json src/data/notes.json src/data/photo-manifest-sb.json src/data/archive.json src/data/archive-status.json src/data/sold.json src/data/community-stats.json src/data/lvr-counts.json .sync-debug 2>/dev/null || git add src/data/listings.json src/data/appeal.json src/data/copy.json src/data/notes.json src/data/photo-manifest-sb.json src/data/archive.json src/data/archive-status.json src/data/sold.json src/data/community-stats.json src/data/lvr-counts.json
           if git diff --staged --quiet; then
             echo "沒有變化,略過提交"
           else
