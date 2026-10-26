@@ -15,9 +15,14 @@ export type Rental = {
   ping: number | null // 建物坪數；土地案是土地坪數
   parking: boolean
   rent: number | null // 月租金（元）
-  url: string | null
+  url: string | null // 永慶租屋網原頁（單案頁底部才放，卡片改開自己的單案頁）
   photo: string | null
+  photos?: number // 圖庫（cases/rent<案號>/NN.webp）有幾張；沒有或 0＝只有租屋網封面
 }
+
+export const RENT_PHOTO_BASE = 'https://pub-61c50068c9924c239dfb2d0e0ec9bbd2.r2.dev/cases'
+/** 圖庫第 n 張（n 從 1 開始） */
+export const rentPhotoUrl = (id: string, n: number): string => `${RENT_PHOTO_BASE}/rent${id}/${String(n).padStart(2, '0')}.webp`
 
 export const escapeHtml = (s: unknown): string =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string)
@@ -27,14 +32,14 @@ const safeUrl = (u: string | null | undefined): string | null => (u && /^https:\
 
 /** 第 index 張出租卡片的 HTML（index 用來排在出售案件後面） */
 export function rentCardHtml(r: Rental, index: number): string {
-  const url = safeUrl(r.url)
-  const photo = safeUrl(r.photo)
+  const url = `/r/?id=${encodeURIComponent(r.id)}` // 開店鋪自己的租件單案頁
+  const photo = r.photos && r.photos > 0 ? rentPhotoUrl(r.id, 1) : safeUrl(r.photo) // 優先用自己圖庫，沒有才用租屋網封面
   const place = `${r.district ?? ''}${r.road ? `・${r.road}` : ''}`
   const spec = [r.type, r.ping ? `${r.ping} 坪` : '', r.floor ? `樓層 ${r.floor}` : ''].filter(Boolean).join('｜')
   const rent = r.rent == null ? null : r.rent.toLocaleString('en-US')
   const t = `${r.type ?? ''}${r.category ?? ''}`
   return (
-    `<a ${url ? `href="${escapeHtml(url)}" target="_blank" rel="noopener"` : ''} class="card block bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-shadow"` +
+    `<a href="${escapeHtml(url)}" class="card block bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-shadow"` +
     ` data-rent="1" data-kind="${escapeHtml(r.category ?? '')}" data-district="${escapeHtml(r.district ?? '')}" data-price="${r.rent ?? 0}" data-i="${100000 + index}"` +
     ` data-age="" data-rooms="" data-parking="${r.parking ? '1' : ''}" data-elevator="" data-apartment="" data-townhouse=""` +
     ` data-factory="${/廠房/.test(t) ? '1' : ''}" data-land="${/土地/.test(t) ? '1' : ''}">` +

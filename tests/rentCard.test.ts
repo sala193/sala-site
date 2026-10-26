@@ -10,9 +10,10 @@ const base: Rental = {
   photo: 'https://yccdn.yungching.com.tw/v1/image/?key=ABC',
 }
 
-test('出租卡片：案名、區與路、型態坪數樓層、月租金、租標籤，點了開租屋網新分頁', () => {
+test('出租卡片：案名、區與路、型態坪數樓層、月租金、租標籤，點了開店鋪自己的租件單案頁', () => {
   const h = rentCardHtml(base, 3)
-  assert.match(h, /href="https:\/\/rent\.yungching\.com\.tw\/house\/2417865" target="_blank" rel="noopener"/)
+  assert.match(h, /href="\/r\/\?id=2417865"/)
+  assert.doesNotMatch(h, /target="_blank"/)
   assert.match(h, /桃園區・中正路/)
   assert.match(h, /藝文特區中正綠園邸高樓層採光3\+1房平車/)
   assert.match(h, /住宅｜37\.66 坪｜樓層 10 ~ 10 \/ 20/)
@@ -42,5 +43,10 @@ test('出租卡片：特殊字元一律跳脫；不是 https 的網址不用', (
   assert.match(h, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/)
   assert.doesNotMatch(h, /javascript:/)
   assert.doesNotMatch(h, /example\.com/)
-  assert.doesNotMatch(h, /href=/)
+  assert.match(h, /href="\/r\/\?id=2417865"/) // 卡片一律開自己的單案頁，不會連到壞網址
+})
+
+test('出租卡片：圖庫有照片就用自己的圖庫第 1 張，沒有才用租屋網封面', () => {
+  assert.match(rentCardHtml({ ...base, photos: 5 }, 0), /cases\/rent2417865\/01\.webp/)
+  assert.match(rentCardHtml({ ...base, photos: 0 }, 0), /yccdn\.yungching\.com\.tw/)
 })
