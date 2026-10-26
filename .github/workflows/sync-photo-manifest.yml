@@ -1,0 +1,38 @@
+name: 更新圖庫照片清單
+
+on:
+  schedule:
+    # UTC 22:50 = 台灣時間早上 06:50（電腦 06:30 備份照片之後）
+    - cron: "50 22 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 取出程式碼
+        uses: actions/checkout@v4
+
+      - name: 設定 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 探測圖庫，補進新案件照片張數
+        run: node scripts/sync-photo-manifest.mjs
+
+      - name: 提交並推送(若有變更)
+        run: |
+          git config user.name "sala-listings-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/data/photo-manifest.json
+          if git diff --staged --quiet; then
+            echo "沒有變化,略過提交"
+          else
+            git commit -m "自動更新圖庫照片清單 $(date -u +'%Y-%m-%d')"
+            git pull --rebase origin main
+            git push
+          fi
