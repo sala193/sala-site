@@ -1,18 +1,76 @@
 ---
+// 區域入口頁：依「區」列出現在有銷售中物件的社區（資料天天由官網公開頁自動同步，不手動維護）
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { allCases, districtOf, priceParts, titleOf } from '../lib/store';
+
+const cases = allCases();
+const docs = await getCollection('communities');
+const pageOf = new Map(docs.map((d) => [d.data.community_name, d.slug]));
+
+type Group = { name: string; items: typeof cases };
+const byDistrict = new Map<string, Map<string, typeof cases>>();
+for (const it of cases) {
+  const name = (it.detail?.community as string | undefined)?.trim();
+  if (!name) continue; // 沒有社區名的（透天、土地、廠房等）不放這頁
+  const d = districtOf(it);
+  if (!byDistrict.has(d)) byDistrict.set(d, new Map());
+  const m = byDistrict.get(d)!;
+  m.set(name, [...(m.get(name) ?? []), it]);
+}
+
+// 鶯歌區排最前，其餘依社區數量多到少
+const districts = [...byDistrict.entries()]
+  .map(([d, m]) => ({
+    d,
+    groups: [...m.entries()]
+      .map(([name, items]): Group => ({ name, items }))
+      .sort((a, b) => b.items.length - a.items.length),
+  }))
+  .sort((a, b) => (a.d === '鶯歌區' ? -1 : b.d === '鶯歌區' ? 1 : b.groups.length - a.groups.length));
+
+const rangeText = (items: typeof cases) => {
+  const ps = items.map((i) => i.price).filter((p): p is number => !!p);
+  if (!ps.length) return '價格洽詢';
+  const [lo, lu] = priceParts(Math.min(...ps));
+  const [hi, hu] = priceParts(Math.max(...ps));
+  return lo === hi && lu === hu ? `${lo} ${lu}` : `${lo} ${lu} ～ ${hi} ${hu}`;
+};
 ---
-<BaseLayout title="鶯歌．鳳鳴" description="鶯歌房市、鳳鳴重劃區完整介紹，房價、交通、生活機能一次看。">
-  <section class="stub">
+<BaseLayout title="鶯歌．鳳鳴社區與物件" description="鶯歌、鳳鳴現在有在賣的社區與物件，點進去看社區介紹與銷售中的房子。">
+  <section class="section">
     <div class="container">
-      <h1>鶯歌．鳳鳴｜區域頁面建置中</h1>
-      <p>
-        這裡未來會是鶯歌房市、鳳鳴重劃區的完整介紹頁（房價、交通、生活機能、建設發展），
-        再從這裡串連到底下的社區頁與物件。現階段歡迎先參考社區資料庫或不動產知識文章。
+      <h1>鶯歌．鳳鳴｜有在賣的社區</h1>
+      <p class="section-lead">
+        下面是蔡莎拉現在手上有銷售中物件的社區。名單每天跟著物件自動更新；想看全部社區介紹，請到社區資料庫。
       </p>
-      <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
-        <a class="btn btn-primary" href="/communities">看社區資料庫</a>
-        <a class="btn btn-outline" href="/articles">看不動產知識</a>
+      <div style="display:flex; gap:14px; flex-wrap:wrap; margin: 8px 0 32px;">
+        <a class="btn btn-primary" href="/cases">看全部銷售中物件</a>
+        <a class="btn btn-outline" href="/communities">看社區資料庫</a>
       </div>
+
+      {districts.map(({ d, groups }) => (
+        <div style="margin-bottom: 44px;">
+          <h2>{d}<span style="font-size:.6em; color: var(--text-soft); font-weight:400;">｜{groups.length} 個社區</span></h2>
+          <div class="grid">
+            {groups.map((g) => (
+              <div style="border:1px solid var(--border, #e5e0d8); border-radius:12px; padding:16px; background:#fff;">
+                <h3 style="margin:0 0 4px;">{g.name}</h3>
+                <p style="margin:0 0 10px; color: var(--text-soft);">銷售中 {g.items.length} 間｜{rangeText(g.items)}</p>
+                <ul style="margin:0 0 10px; padding-left:18px;">
+                  {g.items.slice(0, 3).map((it) => (
+                    <li><a href={`/p/${it.id}`}>{titleOf(it)}</a></li>
+                  ))}
+                </ul>
+                {g.items.length > 3 && <p style="margin:0 0 10px; font-size:.9em; color: var(--text-soft);">另有 {g.items.length - 3} 間，請到銷售中物件頁查看。</p>}
+                {pageOf.has(g.name) && <a href={`/communities/${pageOf.get(g.name)}`}>看{g.name}社區介紹 →</a>}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {districts.length === 0 && <p style="color: var(--text-soft);">目前沒有銷售中的社區物件，歡迎直接 LINE 莎拉。</p>}
     </div>
   </section>
 </BaseLayout>
