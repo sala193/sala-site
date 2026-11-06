@@ -40,7 +40,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // 要同步的門市清單:shopCode 是永慶房仲網門市網址代碼(通常等於電話號碼)
 const STORES = [
   { shopCode: '0226776996', storeName: '鶯歌建國捷運加盟店' },
-  { shopCode: '0226772282', storeName: '鶯歌鳳鳴站前加盟店' }
+  { shopCode: '0226772282', storeName: '鶯歌鳳鳴站前加盟店' },
+  // 2026-11-06 莎拉決定加入：案件搬回中路向陽公園店後，店鋪也要看得到（跟後台官網比對同一組店）
+  { shopCode: '033366776', storeName: '中路向陽公園加盟店' }
 ];
 
 const OUTPUT_PATH = path.join(__dirname, '..', 'src', 'data', 'listings.json');
