@@ -31,6 +31,7 @@ import { writeFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { parseDetail } from './parse-detail.mjs';
+import { parseNewCards } from './parse-cards-new.mjs';
 import { youtubeIdFrom } from './youtube-id.mjs';
 import { carryOverTransfers, normalizeTransfers, pickTransferItems } from './transfers.mjs';
 
@@ -292,6 +293,9 @@ function parseBlock(id, block, store) {
 }
 
 function parseListingsFromHtml(html, store) {
+  // 2026-11 官網改版後的卡片（有就用新版；一張都沒有再走下面的舊版）
+  const fresh = parseNewCards(html, store);
+  if (fresh.length) return fresh;
   const linkRe = /(?:https?:)?\/\/buy\.yungching\.com\.tw\/house\/(\d+)/g;
   const seen = new Map();
   let m;
@@ -364,6 +368,11 @@ async function main() {
     for (const t of transfers) {
       try {
         const { listings: shopListings } = await syncStore(t);
+        // 新版卡片沒有案號：用上一次的清單依官網編號補回來，才找得到指定案號
+        for (const it of shopListings) {
+          const prev = previous.get(it.id);
+          if (!it.caseNo && prev?.caseNo) it.caseNo = prev.caseNo;
+        }
         const hit = pickTransferItems(shopListings, t.caseNos);
         console.log(`調件店 ${t.storeName}：指定 ${t.caseNos.length} 件,官網找到 ${hit.length} 件`);
         all = all.concat(hit);
@@ -375,6 +384,14 @@ async function main() {
     }
   } catch (err) {
     console.warn(`讀取調件清單失敗(不影響其他案件):${err.message}`);
+  }
+
+  // 新版卡片沒有案號、大樓也沒有土地坪數：用「上一次存的清單」同一個官網編號補回來（新物件之後由詳情頁補）
+  for (const item of all) {
+    const prev = previous.get(item.id);
+    if (!prev) continue;
+    if (!item.caseNo && prev.caseNo) item.caseNo = prev.caseNo;
+    if (item.landPing == null && prev.landPing != null) item.landPing = prev.landPing;
   }
 
   // 依 id+store 去重(理論上分頁不會重複,保險起見還是做一次)
@@ -391,7 +408,8 @@ async function main() {
       const { images, detail } = await fetchDetail(item.id);
       const prev = previous.get(item.id);
       const empty = !detail || (!detail.title && !(detail.features || []).length);
-      item.detail = empty && prev?.detail ? prev.detail : detail; // 單案銷售頁 /p/<id> 用的詳情欄位（抓不到就沿用舊的）
+      item.detail = empty && prev?.detail ? prev.detail : detail;
+      if (!item.caseNo && detail?.caseNo) item.caseNo = detail.caseNo; // 新物件的案號從詳情頁補 // 單案銷售頁 /p/<id> 用的詳情欄位（抓不到就沿用舊的）
       if (images.length) {
         // 詳情頁相簿的第一張不一定是外觀封面照(有些物件第一張是格局圖)。
         // 列表頁縮圖(item.image)才是永慶官網自己選定的封面照,
@@ -424,6 +442,22 @@ async function main() {
       console.log(`  已完成 ${i + 1}/${listings.length}`);
     }
     await new Promise((r) => setTimeout(r, 400));
+  }
+
+  // 保護：結果看起來不對就整個停手，不寫任何檔案、不提交，網站維持前一天的樣子
+  // （2026-11-06 官網改版時，沒有這道保護，242 筆缺價格的壞資料直接上線了）
+  const missing = listings.filter((l) => !l.name || !l.price).length;
+  const prevCount = previous.size;
+  if (listings.length < 100 || missing > listings.length * 0.1 || (prevCount > 0 && listings.length < prevCount * 0.7)) {
+    await mkdir(DEBUG_DIR, { recursive: true });
+    for (const [shopCode, html] of Object.entries(debugPages)) {
+      await writeFile(path.join(DEBUG_DIR, `${shopCode}-page1.html`), html, 'utf-8');
+    }
+    console.error(
+      `同步停止：抓到 ${listings.length} 筆（上一次 ${prevCount} 筆），其中 ${missing} 筆缺名稱或價格。` +
+        '可能是永慶官網改版。為了安全，這次沒有更新任何檔案。'
+    );
+    process.exit(1);
   }
 
   await mkdir(path.dirname(OUTPUT_PATH), { recursive: true });

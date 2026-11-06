@@ -2,8 +2,8 @@ name: 同步永慶待售物件清單
 
 on:
   schedule:
-    # UTC 22:00 = 台灣時間隔天早上 06:00
-    - cron: "0 22 * * *"
+    # UTC 23:27 = 台灣時間隔天早上 07:27（要趕在 08:00 晨報前；避開整點，GitHub 整點很擠會延遲）
+    - cron: "27 23 * * *"
   workflow_dispatch: {}
 
 permissions:
