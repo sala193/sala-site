@@ -6,6 +6,8 @@ import Icon from '../components/store/Icon.astro';
 import { AGENT, allCases, soldCases, photosOf, priceParts, districtOf, kindOf, roadOf, titleOf } from '../lib/store';
 import { AGE_BUCKETS, flagsOf, LIVING_AREAS, PRICE_STEPS, priceLabel } from '../lib/caseFilter';
 
+// 預設排序固定「住宅優先」：住宅、透天在前，再來店面辦公、廠房、土地；同一類裡維持原本順序（莎拉 2026-11-07）
+const KIND_RANK: Record<string, number> = { 住宅: 0, 透天: 0, 店面辦公: 1, 廠房: 2, 土地: 3 };
 const cases = allCases().map((it) => {
   const [pn, pu] = priceParts(it.price);
   return {
@@ -26,7 +28,7 @@ const cases = allCases().map((it) => {
     cover: photosOf(it)[0] || '',
     isNew: it.isNew,
   };
-});
+}).sort((a, b) => (KIND_RANK[a.kind] ?? 9) - (KIND_RANK[b.kind] ?? 9)); // 陣列排序是穩定的，同類保持原順序
 
 // 最近成交（近 6 個月、最多 12 件）：照片、劃掉的開價＋「已成交」紅章（跟存檔頁同一個樣子）、區域路段、案名、型態坪數；
 // 不放成交價、不放成交日期，也不連到單案頁
