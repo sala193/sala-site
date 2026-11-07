@@ -7,6 +7,7 @@ import archive from '../data/archive.json';
 import archiveStatus from '../data/archive-status.json';
 import sold from '../data/sold.json';
 import hidden from '../data/hidden.json';
+import coverIdx from '../data/cover-idx.json';
 import { cleanTitle } from './notes';
 
 export { AGENT } from './agent';
@@ -24,6 +25,17 @@ export const hiddenIds = new Set(Object.keys(hidden as Record<string, string>));
 
 /** 照片優先序（目前實作第 3 層：圖庫的官網備份；沒有備份就直接用官網網址） */
 export function photosOf(item: Item): string[] {
+  return coverFirst(item.id, rawPhotosOf(item));
+}
+
+/** 封面避開格局圖：scripts/pick-covers.py 每天算出「第一張不是格局圖」是第幾張，把那張排到最前面，其餘順序不變 */
+function coverFirst(id: string, list: string[]): string[] {
+  const k = (coverIdx as Record<string, number>)[id] || 0;
+  if (k > 0 && k < list.length) return [list[k], ...list.slice(0, k), ...list.slice(k + 1)];
+  return list;
+}
+
+function rawPhotosOf(item: Item): string[] {
   const n = (manifest as Record<string, number>)[item.id] || 0;
   if (n > 0) return Array.from({ length: n }, (_, i) => `${PHOTO_BASE}/yc${item.id}/${String(i + 1).padStart(2, '0')}.webp`);
   const m = (manifestSb as Record<string, number>)[item.id] || 0;
