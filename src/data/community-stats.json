@@ -1,6 +1,6 @@
 {
  "京采": {
-  "onsale": 0
+  "onsale": 1
  },
  "信源": {
   "onsale": 0
@@ -267,7 +267,7 @@
   "onsale": 0
  },
  "金鶯鎮": {
-  "onsale": 1
+  "onsale": 2
  },
  "陶之尊": {
   "onsale": 0
@@ -498,7 +498,7 @@
   "onsale": 0
  },
  "富甲天下": {
-  "onsale": 0
+  "onsale": 1
  },
  "富盛家園": {
   "onsale": 0
@@ -669,7 +669,7 @@
   "onsale": 0
  },
  "豐田大郡": {
-  "onsale": 1
+  "onsale": 2
  },
  "豐耘懷石": {
   "onsale": 0
