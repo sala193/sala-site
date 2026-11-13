@@ -50,3 +50,12 @@ test('出租卡片：圖庫有照片就用自己的圖庫第 1 張，沒有才�
   assert.match(rentCardHtml({ ...base, photos: 5 }, 0), /cases\/rent2417865\/01\.webp/)
   assert.match(rentCardHtml({ ...base, photos: 0 }, 0), /yccdn\.yungching\.com\.tw/)
 })
+
+test('出租卡片：後台上傳的租件（photoKey）封面用 rent＋photoKey，沒有 photoKey 才用案號', () => {
+  const mine = rentCardHtml({ ...base, id: 'm6515979a', photos: 3, photoKey: 'm6515979a', photo: null }, 0)
+  assert.match(mine, /cases\/rentm6515979a\/01\.webp/)
+  const claimed = rentCardHtml({ ...base, id: '2427090', photos: 2, photoKey: 'm6515979a', photo: null }, 0)
+  assert.match(claimed, /cases\/rentm6515979a\/01\.webp/)
+  const normal = rentCardHtml({ ...base, photos: 2 }, 0)
+  assert.match(normal, /cases\/rent2417865\/01\.webp/)
+})

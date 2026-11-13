@@ -36,6 +36,10 @@ const pageTitle = `出租物件｜${AGENT.brand} 心選好宅`;
           <span id="unit" class="text-base font-extrabold text-rose-600">元／月</span>
         </p>
         <div id="specs" class="grid grid-cols-3 gap-2 mt-5"></div>
+        <section id="noteBox" class="hidden mt-6 bg-amber-50/60 border border-amber-100 rounded-xl p-4">
+          <h2 class="text-base font-bold text-slate-900">莎拉筆記</h2>
+          <p id="note" class="mt-2 text-sm text-slate-700 leading-relaxed whitespace-pre-line"></p>
+        </section>
         <p class="mt-6 text-sm text-slate-500 leading-relaxed">
           想看這間？直接 LINE 我，我幫您約看屋時間，也可以一起看看買賣的好房子。
         </p>
@@ -84,7 +88,7 @@ const pageTitle = `出租物件｜${AGENT.brand} 心選好宅`;
       if (!r) { $('missing').classList.remove('hidden'); return; }
 
       // 照片：圖庫有就用圖庫（1..N 張），沒有才用租屋網封面；跟售案一樣：大圖左右滑＋下方小圖＋點大圖放大
-      const urls = r.photos && r.photos > 0 ? Array.from({ length: r.photos }, (_, i) => rentPhotoUrl(r!.id, i + 1)) : r.photo && /^https:\/\//.test(r.photo) ? [r.photo] : [];
+      const urls = r.photos && r.photos > 0 ? Array.from({ length: r.photos }, (_, i) => rentPhotoUrl(r!.photoKey ?? r!.id, i + 1)) : r.photo && /^https:\/\//.test(r.photo) ? [r.photo] : [];
       const wm = '<img src="/images/brand/sala-watermark.png" alt="" class="photo-wm absolute bottom-11 right-3 w-14 pointer-events-none select-none" />';
       if (urls.length) {
         $('mainWrap').innerHTML = urls.map((u, i) => `<div class="swiper-slide cursor-pointer" data-index="${i}"><div class="aspect-[4/3] w-full bg-slate-100 overflow-hidden relative"><img src="${escapeHtml(u)}" alt="${escapeHtml(r!.name)} 第 ${i + 1} 張" class="w-full h-full object-cover" loading="${i < 2 ? 'eager' : 'lazy'}" decoding="async" referrerpolicy="no-referrer" />${wm}<div class="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-xs font-medium px-2.5 py-1 rounded-full">${i + 1} / ${urls.length}</div></div></div>`).join('');
@@ -122,15 +126,18 @@ const pageTitle = `出租物件｜${AGENT.brand} 心選好宅`;
         ['型態', [r.type, r.category].filter((x, i, a) => x && a.indexOf(x) === i).join('・')],
         [r.category === '土地' ? '土地坪數' : '坪數', r.ping ? `${r.ping} 坪` : ''],
         ['樓層', r.floor ?? ''],
+        ['屋齡', r.age != null ? `${r.age} 年` : ''],
+        ['社區', r.community ?? ''],
         ['車位', r.parking ? '有車位' : ''],
         ['生活圈', r.area ?? ''],
       ].filter((c): c is [string, string] => !!c[1]);
       $('specs').innerHTML = cells.map(([k, v]) => `<div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-xs text-slate-400">${escapeHtml(k)}</p><p class="text-sm font-bold text-slate-800 mt-1">${escapeHtml(v)}</p></div>`).join('');
 
+      if (r.note && r.note.trim()) { $('note').textContent = r.note.trim(); $('noteBox').classList.remove('hidden'); }
       document.title = `${r.name}｜出租｜蔡莎拉 心選好宅`;
       // LINE 預約：帶案名與租屋網案號，莎拉一看就知道是哪一間
       const lineId = $('rp').dataset.lineId || '';
-      const msg = `您好，我想了解出租物件「${r.name}」（案號 ${r.id}），想預約看屋。`;
+      const msg = `您好，我想了解出租物件「${r.name}」${/^\d+$/.test(r.id) ? `（案號 ${r.id}）` : ''}，想預約看屋。`;
       ($('lineBtn') as HTMLAnchorElement).href = `https://line.me/R/oaMessage/${lineId}/?${encodeURIComponent(msg)}`;
       $('body').classList.remove('hidden');
     })();
