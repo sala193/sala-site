@@ -29,4 +29,5 @@ await grab('store_notes_all', 'notes.json', '定稿莎拉筆記');
 await grab('store_photo_manifest', 'photo-manifest-sb.json', '雲端新增的照片備份');
 await grab('store_archive_status', 'archive-status.json', '銷售頁存檔狀態');
 await grab('store_recent_sold', 'sold.json', '最近成交（近 6 個月、最多 12 件）');
+await grab('store_cover_manual', 'cover-manual.json', '莎拉自選首圖');
 await grab('store_community_stats', 'community-stats.json', '社區目前在售件數');

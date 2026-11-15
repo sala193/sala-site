@@ -8,6 +8,7 @@ import archiveStatus from '../data/archive-status.json';
 import sold from '../data/sold.json';
 import hidden from '../data/hidden.json';
 import coverIdx from '../data/cover-idx.json';
+import coverManual from '../data/cover-manual.json';
 import { cleanTitle } from './notes';
 
 export { AGENT } from './agent';
@@ -30,7 +31,8 @@ export function photosOf(item: Item): string[] {
 
 /** 封面避開格局圖：scripts/pick-covers.py 每天算出「第一張不是格局圖」是第幾張，把那張排到最前面，其餘順序不變 */
 function coverFirst(id: string, list: string[]): string[] {
-  const k = (coverIdx as Record<string, number>)[id] || 0;
+  // 莎拉在後台相簿自己選的首圖優先；沒選才用自動跳過格局圖的結果
+  const k = (coverManual as Record<string, number>)[id] || (coverIdx as Record<string, number>)[id] || 0;
   if (k > 0 && k < list.length) return [list[k], ...list.slice(0, k), ...list.slice(k + 1)];
   return list;
 }
