@@ -10,7 +10,7 @@ parking_type: 坡道平面（170個，車位1比1）
 public_ratio: "約34.1～34.4%（扣除車位）"
 management_fee: "每坪約60元（依在售案件推算，非管委會公告）"
 nearby_mrt: 台鐵鳳鳴站（步行約3分鐘／190公尺）／鶯桃捷運鶯桃福德站（步行約13分鐘／950公尺，騎YouBike約5分鐘）
-cover_image: /images/communities/senyao/exterior.webp
+cover_image: /images/communities/senyao-cover.jpg
 author: 蔡莎拉
 date: 2026-11-17
 tags: ["鳳鳴", "森耀", "森聯", "電梯大樓", "鳳鳴重劃區", "成屋"]
