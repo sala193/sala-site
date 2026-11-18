@@ -240,7 +240,7 @@
   "onsale": 1
  },
  "第芬尼": {
-  "onsale": 0
+  "onsale": 1
  },
  "精品苑": {
   "onsale": 0
@@ -861,7 +861,7 @@
   "onsale": 1
  },
  "山水綠庭 - 1": {
-  "onsale": 1
+  "onsale": 0
  },
  "森聯LIFE森睦": {
   "onsale": 3
@@ -903,7 +903,7 @@
   "onsale": 1
  },
  "新潤幸福莊園2": {
-  "onsale": 3
+  "onsale": 4
  },
  "森聯之王-森藏": {
   "onsale": 2
