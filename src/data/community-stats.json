@@ -69,7 +69,7 @@
   "onsale": 0
  },
  "森闊": {
-  "onsale": 1
+  "onsale": 0
  },
  "永春": {
   "onsale": 0
@@ -561,7 +561,7 @@
   "onsale": 0
  },
  "成功大廈": {
-  "onsale": 0
+  "onsale": 1
  },
  "捷韻富境": {
   "onsale": 0
@@ -675,7 +675,7 @@
   "onsale": 0
  },
  "豐邑日日": {
-  "onsale": 0
+  "onsale": 1
  },
  "豐邑泱泱": {
   "onsale": 0
@@ -861,7 +861,7 @@
   "onsale": 1
  },
  "山水綠庭 - 1": {
-  "onsale": 0
+  "onsale": 1
  },
  "森聯LIFE森睦": {
   "onsale": 3
