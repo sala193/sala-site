@@ -159,7 +159,7 @@
   "onsale": 0
  },
  "大觀園": {
-  "onsale": 1
+  "onsale": 2
  },
  "宜誠賦": {
   "onsale": 1
@@ -330,7 +330,7 @@
   "onsale": 0
  },
  "三發丰悅": {
-  "onsale": 0
+  "onsale": 1
  },
  "三鶯學府": {
   "onsale": 0
@@ -360,7 +360,7 @@
   "onsale": 1
  },
  "中正新都": {
-  "onsale": 0
+  "onsale": 1
  },
  "中正首府": {
   "onsale": 0
@@ -735,7 +735,7 @@
   "onsale": 0
  },
  "雙喜臨門": {
-  "onsale": 0
+  "onsale": 1
  },
  "高峰園墅": {
   "onsale": 0
@@ -819,7 +819,7 @@
   "onsale": 0
  },
  "幸福莊園一": {
-  "onsale": 3
+  "onsale": 2
  },
  "微笑海悦NO2": {
   "onsale": 0
@@ -864,7 +864,7 @@
   "onsale": 1
  },
  "森聯LIFE森睦": {
-  "onsale": 3
+  "onsale": 2
  },
  "華登御墅NO11": {
   "onsale": 1
@@ -945,7 +945,7 @@
   "onsale": 0
  },
  "美麗宏國 - 乙區": {
-  "onsale": 1
+  "onsale": 0
  },
  "美麗宏國 - 甲區": {
   "onsale": 1
